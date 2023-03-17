@@ -1,6 +1,4 @@
-module formalA2
-
-
+module formalqssA
 
 const global debug=false
 const global debug_Integrate=false 
@@ -47,7 +45,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     export plotAbsoluteError,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
     export getError,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError
 
-    export  @NLodeProblem,@NLodeProblemLoop,QSS_Solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
+    export  @NLodeProblem,@loopToBody,QSS_Solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
 
     export Taylor0,mulT,mulTT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT
 
@@ -94,7 +92,5 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("Quantizers/mLiQSS_quantizer.jl")
 
 
-
-end # module
 
 end # module
