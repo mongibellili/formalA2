@@ -40,7 +40,7 @@ end
 
 
 
-function extractJac_from_equs(varNum,ex::Expr,T::Int,D::Int,usymbols::Vector{SymEngine.Basic},dsymbols::Vector{SymEngine.Basic},jac::Vector{Vector{SymEngine.Basic}},jacDiscrete::Vector{Vector{SymEngine.Basic}})
+function extractJac_from_equs(SD::Vector{Vector{Int}},varNum,ex::Expr,D::Int,usymbols::Vector{SymEngine.Basic},dsymbols::Vector{SymEngine.Basic},jac::Vector{Vector{SymEngine.Basic}},JacIntVect::Vector{Vector{Int}},jacDiscrete::Vector{Vector{SymEngine.Basic}},initJac::Vector{Vector{Float64}},discrVars::Vector{Float64},contVars::SVector{T,Float64}) where {T}
   m=postwalk(ex) do a   #after equs constructed, eliminate ref ; use new expr m since we still need z for equs below (below the caller of this)...postwalk
       if a isa Expr && a.head == :ref # a is expre of type A[n]  ie a=A[n]
        a=Symbol((a.args[1]), (a.args[2]))  #a become An #needed for differentiation ...jacobians....
@@ -49,17 +49,50 @@ function extractJac_from_equs(varNum,ex::Expr,T::Int,D::Int,usymbols::Vector{Sym
   end
   jacArr = []
   jacDiscArr = []
+  temparr=Array{Float64}(undef, T)
   basi = convert(Basic, m)
   #extract jaco components
   for j = 1:T            
       coef = diff(basi, usymbols[j])
       push!(jacArr, coef)
+      if coef!=0
+        push!(SD[j],varNum)
+        push!(JacIntVect[varNum],j)
+      end
+      for k in eachindex(dsymbols)
+        coef=subs(coef, dsymbols[k]=>discrVars[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii#later check and add sysmbols qi....
+      end   
+      for k in eachindex(usymbols)
+        coef=subs(coef, usymbols[k]=>contVars[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii#later check and add sysmbols qi....
+      end  
+      temparr[j]=coef
   end
   for j = 1:D            
       coef = diff(basi, dsymbols[j])
       push!(jacDiscArr, coef)
      # @show coef
   end
+
+
+  #= for j=1:T  
+    temparr=Array{Float64}(undef, T)
+    ex=jac[i][j]
+    for k in eachindex(dsymbols)
+        ex=subs(ex, dsymbols[k]=>discrVars[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii#later check and add sysmbols qi....
+    end   
+    for k in eachindex(usymbols)
+     ex=subs(ex, qsym[k]=>contVars[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii#later check and add sysmbols qi....
+    end    
+     temparr[j]=ex
+ end =#
+ initJac[varNum]=temparr
+
+
+
+
+
+
+
  # push!(jac, jacArr)
   jac[varNum]=jacArr
  # push!(jacDiscrete, jacDiscArr) 
@@ -92,7 +125,19 @@ function extractZCJac_from_equs(ex::Expr,T::Int,D::Int,usymbols::Vector{SymEngin
  # jacDiscrete[varNum]=jacDiscArr            
 end
 
+function changeExprToFirstValue(ex::Expr)##
+  newEx=postwalk(ex) do a  # change u[1] to u[1][0]
+      if a isa Expr && a.head == :ref && a.args[1]==:q
+           outerRef=Expr(:ref)
+          push!(outerRef.args,a)
+          push!(outerRef.args,:(0))
+          a=outerRef
+      end
+      return a
+  end
 
+  newEx
+  end
 
 
 function twoInOneSimplecase(ex)#  it s easier and healthier to leave the big case alone in one prewalk (below) when returning the size of the distributed cahce

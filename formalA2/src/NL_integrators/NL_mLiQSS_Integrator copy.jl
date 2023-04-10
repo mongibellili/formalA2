@@ -136,7 +136,7 @@
   breakloop= zeros(MVector{1,Float64})
   #@timeit "while" 
   simul=false
-  buddySimul=[0,0]
+  buddySimul=0
   while simt < ft && totalSteps < 2000000
 
    
@@ -206,21 +206,17 @@
         #----------------------------------------------------check dependecy cycles---------------------------------------------      
         #qminus[index]=0.0
         simul=false
-        buddySimul=[0,0]
+        buddySimul=0
    #=    for j in SD[index]
         
         if j!=index && a[index][j]*a[j][index]!=0  
-          #if buddySimul==0      # allow single simul...later remove and allow multiple simul          
+          if buddySimul==0      # allow single simul...later remove and allow multiple simul          
               
               if isCycle_and_simulUpdate(Val(O),index,j,prevStepVal,direction,x,q,quantum,a,u,qaux,olddx,olddxSpec,tx,tq,tu,simt,ft,SD,qminus,breakloop,nextStateTime)
                 simulStepCount+=1   
                 simul=true  
                 #qminus[index]=1.0  
-                if buddySimul[1]==0
-                   buddySimul[1]=j    
-                else
-                  buddySimul[2]=j 
-                end
+                buddySimul=j      
                # for b = 1:T # elapsed update all other vars that these der i & j depend upon.needed for when sys has 3 or more vars.
                   for b in (jac[j]  )    
                     elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
@@ -325,7 +321,7 @@
                 end#end for SZ  =#                                       
                 updateLinearApprox(Val(O),j,x,q,a,u,qaux,olddx,tu,simt)             
               end#end ifcycle check
-         #end #end if allow one simulupdate
+         end #end if qminus[index]
         end#end if j!=0
       end#end FOR_cycle check
  =#
@@ -334,9 +330,9 @@
       #-------------------------------------------------------------------------------------
   
       for c in SD[index]   #index influences c
-        if c==buddySimul[1] || c==buddySimul[2] || (c==index && buddySimul[1]!=0)  # buddysimul!=0 means simulstep happened c==j already been taken care off under simul aci=aji already updated after simul and acc=ajj also updated at end of simul
+        if c==buddySimul || (c==index && buddySimul!=0)  # buddysimul!=0 means simulstep happened c==j already been taken care off under simul aci=aji already updated after simul and acc=ajj also updated at end of simul
                                                        #and if  c==index acc && aci=aii to be updated below at end;
-        elseif c==index && buddySimul[1]==0  # simulstep did not happen; still no need to update acc & aci =aii (to be updated at end); only recomputeNext needed
+        elseif c==index && buddySimul==0  # simulstep did not happen; still no need to update acc & aci =aii (to be updated at end); only recomputeNext needed
           for b in (jac[c]  )    # update other influences
             elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
           end
@@ -353,7 +349,7 @@
                   end
 
                   # update aci #i want influence of index on dxc
-                  if (buddySimul[1] in jac[c])||(buddySimul[2] in jac[c]) # simulupdate happened and qjthrown also will influence dxc 
+                  if buddySimul in jac[c] # simulupdate happened and qjthrown also will influence dxc 
                     qitemp=q[index][0];q[index][0]=qaux[index][1] #to get rid off buddySimul influence;we want only infleuce of index to find aci
                     clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache);
                     olddxSpec[c][1]=taylorOpsCache[1][0]

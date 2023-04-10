@@ -236,7 +236,7 @@ end
 function B44(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
     if j == 1
         #= none:1 =#
-        addT(mulT(-0.01, q[1], cache[2]), mulT(1.24, q[2], cache[3]), 0.0124, cache[1])
+        addT(mulT(-0.01, q[1], cache[2]), mulT(1.24, q[2], cache[3]), -0.0124, cache[1])
         #= none:1 =#
         return nothing
     else
@@ -249,7 +249,7 @@ end
 function B45(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
     if j == 1
         #= none:1 =#
-        addT(mulT(-0.01, q[1], cache[2]), mulT(1.24, q[2], cache[3]), -1.22, cache[1])
+        addT(mulT(-0.01, q[1], cache[2]), mulT(1.24, q[2], cache[3]), -1.26, cache[1])
         #= none:1 =#
         return nothing
     else
@@ -259,7 +259,7 @@ function B45(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0
         return nothing
     end
 end
-function B51(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
+function B551(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
     if j == 1
         #= none:1 =#
         muladdT(-0.01, q[1], mulT(1.24, q[2], cache[2]), cache[1])
@@ -320,6 +320,19 @@ function B55(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0
     else
         #= none:1 =#
         subadd(mulT(1.24, q[1], cache[2]), mulT(0.01, q[2], cache[3]), 2.49, cache[1])
+        #= none:1 =#
+        return nothing
+    end
+end
+function B51(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
+    if j == 1
+        #= none:1 =#
+        mulsub(-20.0, q[1], mulT(80.0, q[2], cache[2]), cache[1])
+        #= none:1 =#
+        return nothing
+    else
+        #= none:1 =#
+        mulsub(1.24, q[1], mulT(0.01, q[2], cache[2]), cache[1])
         #= none:1 =#
         return nothing
     end

@@ -49,7 +49,7 @@ function minPosRoot(coeff::SVector{3,Float64}, ::Val{2}) # credit goes to github
 end
 
 
-@inline function minPosRoot(coeffs::SVector{4,Float64}, ::Val{3})#where F <: AbstractFloat
+#= @inline function minPosRoot(coeffs::SVector{4,Float64}, ::Val{3})#where F <: AbstractFloat
   if coeffs[4] == 0.0
     coeffs2=@SVector[coeffs[1],coeffs[2],coeffs[3]]
     return minPosRoot(coeffs2, Val(2))
@@ -92,9 +92,52 @@ end
   x = x₁ > -eps(Float64) ? x₁ : Inf#typemax(F)
   x₂ > -eps(Float64) && x₂ < x ? x₂ : x
   end
+end =#
+
+@inline function minPosRoot(coeffs::SVector{4,Float64}, ::Val{3})#where F <: AbstractFloat
+  if coeffs[4] == 0.0
+    coeffs2=@SVector[coeffs[1],coeffs[2],coeffs[3]]
+    return minPosRoot(coeffs2, Val(2))
+  end
+  _a = 1.0 / coeffs[4]
+  b, c, d = coeffs[3] * _a, coeffs[2] * _a, coeffs[1] * _a
+  m = b < c ? b : c
+  m = d < m ? d : m
+  m > 0.0 && return Inf#typemax(Float64) # Cauchy bound
+  _3 = 1.0 / 3
+  _9 = 1.0 / 9
+  SQ3 = sqrt(3.0)
+  xₙ = -b * _3
+  b²_9 = b * b * _9
+  yₙ = muladd(muladd(-2, b²_9, c), xₙ, d)   #eq to 2R
+  δ² = muladd(-_3, c, b²_9)                  #eq to Q
+  h² = 4δ² * δ² * δ²
+  Δ = muladd(yₙ, yₙ, -h²)
+  if Δ > 0.0 # one real root and two complex roots
+  p = yₙ < 0 ? cbrt(0.5 * (-yₙ + √Δ)) : cbrt(0.5 * (-yₙ - √Δ))
+  q = δ² / p
+  z = xₙ + p + q
+  z > 0.0 ? z : Inf#typemax(Float64)
+  elseif Δ < 0.0 # three real roots
+  θ = abs(yₙ) < 0.0 ? 0.5π * _3 : atan(√abs(Δ) / abs(yₙ)) * _3 # acos(-yₙ / √h²)
+  δ = yₙ < 0 ? √abs(δ²) : -√abs(δ²)
+  z₁ = 2δ * cos(θ)
+  z₂ = muladd(-0.5, z₁, xₙ)
+  z₃ = SQ3 * δ * sin(θ)
+  x₁ = xₙ + z₁
+  x₂ = z₂ + z₃
+  x₃ = z₂ - z₃
+  x = x₁ > 0.0 ? x₁ : Inf# typemax(F)
+  x = x₂ > 0.0 && x₂ < x ? x₂ : x
+  x₃ > 0.0 && x₃ < x ? x₃ : x
+  else # double or triple real roots
+  δ = cbrt(0.5yₙ)
+  x₁ = xₙ + δ
+  x₂ = xₙ - 2δ
+  x = x₁ > 0.0 ? x₁ : Inf#typemax(F)
+  x₂ > 0.0 && x₂ < x ? x₂ : x
+  end
 end
-
-
 ###########later optimize
 
 #= @inline function minPosRoot(coeffs::NTuple{3,Float64}, ::Val{2}) 

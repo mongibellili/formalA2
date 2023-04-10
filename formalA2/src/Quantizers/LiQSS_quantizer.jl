@@ -48,34 +48,41 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
    nextTime[i]=simt+h
     return nothing
 end
-function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
-    q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2]
+function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::Vector{Vector{Float64}},uv::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
+    q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2];a=av[i][i]
+   
+   
+   
     qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
    # tq[i]=simt
+
+   
+
     olddx[i][1]=x1#appears only here...updated here and used in updateApprox   
-    u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
+    #u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
+    u1=x1-a*qaux[i][1]
     uv[i][i][1]=u1
     uv[i][i][2]=x2-av[i][i]*q1
     u2=uv[i][i][2]
     tu[i]=simt  
     # olddx[i][2]=2*x2# 
     ddx=x2
-    a=av[i][i]
+    
     quan=quantum[i]
     h=0.0
     if a!=0.0
         if ddx ==0.0
-            #= ddx=a*a*q+a*u1 +u2
-            if ddx==0.0 =#
-                ddx=1e-26# changing -40 to -6 nothing changed
-                println("ddx=0")
-            #end
+             ddx=a*a*q+a*u1 +u2
+            if ddx==0.0 
+                ddx=1e-15# changing -40 to -6 nothing changed
+                #println("ddx=0")
+            end
         end
         h = ft-simt
         #tempH1=h
-        q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
-                 (1 - h * a + h * h * a * a / 2)
+        #q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /(1 - h * a + h * h * a * a / 2)
+                 q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
         
         if (abs(q - x) >  quan) # removing this did nothing...check @btime later
           h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
@@ -140,7 +147,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
            # q1=u1+h*u2  #(250 allocations: 16.07 KiB)
           #  @show h,x2,i,u1,u2
         else
-            println("x2==0")
+           # println("x2==0")
             if x1!=0.0
                 h=abs(quan/x1)
                 q=x+h*x1
@@ -165,12 +172,19 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     qv[i][1]=q1  
    # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
    nextTime[i]=simt+h
-    return nothing
+   #= if i==4
+    @show  q,q1
+    @show  x,x1,x2
+    @show x+x1*h+h*h*x2/2,x1+h*x2
+   @show  q+h*q1
+   @show nextTime[i],simt,h
+   end =#
+    return h
 end
 
 
 
-function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
+function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::Vector{Vector{Float64}},uv::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
     q=qv[i][0];q1=qv[i][1];q2=2*qv[i][2];x=xv[i][0];x1=xv[i][1];x2=2*xv[i][2];x3=6*xv[i][3];u1=uv[i][i][1];u2=uv[i][i][2];u3=uv[i][i][3]
     elapsed=simt-tq[i]
     qaux[i][1]=q+elapsed*q1+elapsed*elapsed*q2/2#appears only here...updated here and used in updateApprox and in updateQevent later
@@ -179,6 +193,7 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
    # tq[i]=simt
     elapsed=simt-tu[i]
     u1=u1+elapsed*u2+elapsed*elapsed*u3/2  
+   # u1=x1-av[i][i]*qaux[i][1]
     uv[i][i][1]=u1
    # u2=u2+elapsed*u3 
    # uv[i][i][2]=u2
@@ -241,9 +256,9 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
        γ=1-a*h+h*h*a*a/2-h*h*h*a*a*a/6 =#
         q = β/γ
         end
-        #=  if maxIter < 200
+         if maxIter < 20
              println("maxiter of mpudate= ",maxIter)
-         end =#
+         end
 
 
         q1=(a*(1-h*a)*q+u1*(1-h*a)-h*h*(a*u2+u3)/2)/(1-h*a+h*h*a*a/2)
@@ -330,6 +345,8 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     qv[i][1]=q1 
     qv[i][2]=q2/2  
     nextTime[i]=simt+h
+    
+
     return nothing
 end
 
@@ -504,7 +521,7 @@ end
 
 
 end =#
-function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::Vector{Vector{Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
@@ -514,6 +531,7 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
         @show i,x,q,currentTime
     end =#
     coef=@SVector [q-x, q1-x1,-x2]#
+    
         nextTime[i]=currentTime + minPosRoot(coef, Val(2))
         if q-x >0
             coef=setindex(coef, q-x-2*quantum[i],1)
@@ -529,12 +547,18 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
             end
         else
             nextTime[i]=currentTime+1e-19 #
-           println("**********************************nexttime[$i]==$currentTime")
+          # println("**********************************nexttime[$i]==$currentTime")
             #= if  nextTime[1]==Inf &&  nextTime[2]==Inf
                 println("equilibrium reached sys of 2 vars")
                 @show currentTime
             end =#
         end
+       #=  if i==4
+            @show coef
+            @show currentTime
+            @show nextTime[i]
+            @show q-x
+        end =#
    #=coef=setindex(coef,q - x,1)
                 time3 = currentTime + minPosRoot(coef, Val(2))
                 time1 = time1 < time3 ? time1 : time3  =#  
@@ -592,7 +616,7 @@ end
     end  =#   
 end =#
 
-function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::Vector{Vector{Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
@@ -730,24 +754,14 @@ function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]   #if a==0 u same as derx meaning that in updateQ if derx> we dont have to check if u>0 ....note1
     return nothing
 end
-function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
+function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::Vector{Vector{Float64}},u::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
    # println("aii before updateoher= ",a[i][i])
     if diffQ != 0.0
-        if abs(a[i][i])>1e-6
+       # if abs(a[i][i])>1e-6
         a[i][i]=(x[i][1]-olddx[i][1])/diffQ
-        end
-       #=  if a[i][i]>0.0   # this is new for liqss2....deleting this causes the schedule static error unless changing also inside recompute a<0 to a!=0
-            a[i][i]=0.0
-        end =#
-        #= if a[i][i]==0.0   # this is new for liqss2....deleting this causes the schedule static error unless changing also inside recompute a<0 to a!=0
-            println("x[i][1]==olddx[i][1] at simt= ",simt)
-        end =#
     else
         a[i][i]=0.0
-       # println("diffQ==0 at simt= ",simt)
-        #x[i][1]=0.0
-        
     end
 
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
@@ -760,7 +774,39 @@ function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     end
     return nothing
 end
-function updateLinearApprox(::Val{3},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
+function nupdateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::Vector{Vector{Float64}},u::Vector{Vector{MVector{O,Float64}}},qminus::Float64,olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
+    diffQ=q[i][0]-qminus
+   # println("aii before updateoher= ",a[i][i])
+    if diffQ != 0.0
+       # if abs(a[i][i])>1e-6
+        a[i][i]=(x[i][1]-olddx[i][1])/diffQ
+    else
+        a[i][i]=0.0
+    end
+
+    u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
+    u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]
+    tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
+    if debug
+        println("u$i$i = ",u[i][i][1])
+        println("du$i$i = ",u[i][i][2])
+        println("tu[$i] = ",tu[i])
+    end
+    return nothing
+end
+
+function nupdateUaNull(::Val{2},i::Int,x::Vector{Taylor0{Float64}},u::Vector{Vector{MVector{O,Float64}}},tu::MVector{T,Float64},simt::Float64)where{T,O}
+   
+
+    u[i][i][1]=x[i][1]
+    u[i][i][2]=2*x[i][2]
+    tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
+ 
+    return nothing
+end
+
+
+function updateLinearApprox(::Val{3},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::Vector{Vector{Float64}},u::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
     if diffQ != 0.0  #if (fabs(diffQ) > lqu[var] * 1e-6)
         a[i][i]=(x[i][1]-olddx[i][1])/diffQ

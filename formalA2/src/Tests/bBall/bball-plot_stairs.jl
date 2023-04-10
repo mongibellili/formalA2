@@ -1,12 +1,12 @@
 
 
-using formalqssA
+using qss
 #= using Plots;
 gr(); =#
 function test()
     odeprob = @NLodeProblem begin
-        parameter1=100.0# cache can be dynamic....parameters take this feature
-        parameter2=1e+5
+        parameter1=30.0# cache can be dynamic....parameters take this feature
+        parameter2=1e+3
         u = [30.0,0.0]
         discrete = [25.0,0.0]#discrete1==stair; discrete2=contact
         du[1] =u[2]
@@ -31,7 +31,7 @@ function test()
             discrete[3]=5.0
         end =#
     end
-    sol= QSS_Solve(odeprob,10.0,qss2())
+    sol= QSS_Solve(odeprob,8.0,mliqss2())
     save_Sol(sol)
     #save_SolVar(sol,3)
 end

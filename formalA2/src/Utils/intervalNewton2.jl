@@ -119,12 +119,12 @@ function smallestpositiverootintervalnewtonregulafalsi(coeffs::NTuple{4,Float64}
     end
 	#@show poly′
 	MM = smallest(poly)
-	#@show MM
+	@show MM
 	if MM > 0.0 return Inf end
 	domlow, domhigh = 0.0, 1.0- MM
-	index = 20
+	index = 0
     while true
-		#@show domlow domhigh
+		@show domlow domhigh
 		mid = 0.5(domlow + domhigh)
 		comid = horner(mid, poly)
 		codom′low, codom′high = posintervalhorner(domlow, domhigh, poly′)
@@ -173,7 +173,7 @@ function smallestpositiverootintervalnewtonregulafalsi(coeffs::NTuple{4,Float64}
 			end
 		end
 		if index == 0 
-			println("index==0")
+			#println("index==0")
 			break
 		 end
 		domlow, domhigh = unsafe_load(doms, index)
@@ -186,24 +186,19 @@ end
 #coeffs=NTuple{4,Float64}((-1.33,2.0,1.0,6.0))
 #= coeffs=NTuple{4,Float64}((1.33,12.65,1.0,-6.0))
 [0.00E+00	-0.2906652780025	-8938.3815305787700	-51442410.0831105000000] =#
-pp=pointer(Vector{NTuple{2,Float64}}(undef, 11))
+pp=pointer(Vector{NTuple{2,Float64}}(undef, 3))
 #pp=pointer(Vector{NTuple{2,Float64}}(undef, 1))#signal (11): Segmentation fault
 #@show pp
 #@btime gensmallestpositiverootintervalnewton(1.0, -2.0, -1.0)#64.912 ns (1 allocation: 32 bytes)
 #@show gensmallestpositiverootintervalnewton(1.0, -2.0, -1.0)#2.414213562506035#@show quadraticsmallestpositiveroot(1.0, -2.0, -1.0)#1.649 ns (0 allocations: 0 bytes)
 #@show smallestpositiverootintervalnewtonregulafalsi((0.00E+00	,-0.2906652780025	,-8938.3815305787700	,-51442410.0831105000000),pp)
-#= d=1e-6
+d=1e-6
 #c= 0.4289402307079971-0.46926407070799725
 c=-0.040323840000000166
 #b=7597.313022054603-11511.429846502817
 b=-3914.116824448214
 a=1.021243315770821e8
-
-#= a=-5.144241008311048e7
-b=-8938.381530578772
-c=-0.2906652780025244 =#
-
-@show smallestpositiverootintervalnewtonregulafalsi((a, b, c, 1e-6),pp) =#
+@show smallestpositiverootintervalnewtonregulafalsi((a, b, c, 1e-6),pp)
 #@show smallestpositiverootintervalnewtonregulafalsi((1e-6, c, b, a),pp)
 #@show smallestpositiverootintervalnewtonregulafalsi((0.0, -0.2906652780025, -8938.3815305787700, -5.144241008311048e7),pp)
 #@show smallestpositiverootintervalnewtonregulafalsi((-1.33,2.0,1.0,6.0),pp)
@@ -213,11 +208,3 @@ c=-0.2906652780025244 =#
 #@show gensmallestpositiverootintervalnewton(2.0,-3.0,-0.5,-5.0)
 #@btime gensmallestpositiverootintervalnewton(-1.33,2.0,1.0,6.0,2.2)#171.461 ns (2 allocations: 64 bytes)
 #@btime gensmallestpositiverootintervalnewton(-1.33,2.0,1.0,6.0,2.2,3.14)#220.877 ns (2 allocations: 64 bytes)
-
-
-
-pp=pointer(Vector{NTuple{2,Float64}}(undef, 11))
-c=-0.040323840000000166
-b=-3914.116824448214
-a=1.021243315770821e8
-@show smallestpositiverootintervalnewtonregulafalsi((a, b, c, 1e-6),pp)# Inf

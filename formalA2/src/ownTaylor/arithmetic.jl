@@ -77,7 +77,7 @@ end
        
 ## substraction ##
 
-#= (-)(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} =
+(-)(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} =
     (-)(promote(a,b)...)
 
 function (-)(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
@@ -113,7 +113,7 @@ function (-)(b::T, a::Taylor0{T}) where {T<:Number}
     @inbounds coeffs[1] = (-)(b, a[0])
     return Taylor0(coeffs, a.order)
 end       
-     =#
+    
 
 
 

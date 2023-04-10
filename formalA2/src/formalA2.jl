@@ -2,6 +2,10 @@ module formalA2
 
 
 
+
+
+
+
 const global debug=false
 const global debug_Integrate=false 
 
@@ -41,13 +45,14 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
     # list of public (API) to the user, not between files as those are linked as if in one file
     export qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat
-    export save_Sol,stacksave_Sol,plotSol,stackplotSol,plot_save_Sol,stackplot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,save_SolVar
+    export save_Sol#,stacksave_Sol,plotSol,stackplotSol,plot_save_Sol,stackplot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,save_SolVar,save_SolZoomed
     
-    export plotRelativeError,stackplotRelativeError,plot_save_RelativeError,stackplot_save_RelativeError,saveRelativeError,stacksaveRelativeError
-    export plotAbsoluteError,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
-    export getError,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError
+    export plotRelativeError#,stackplotRelativeError,plot_save_RelativeError,stackplot_save_RelativeError,saveRelativeError,stacksaveRelativeError
+    export plotAbsoluteError#,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
+    export getError,getPlot#,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError,plotElapsed
 
     export  @NLodeProblem,@NLodeProblemLoop,QSS_Solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
+    export Sol,getErrorByRodas,getAllErrorsByRodas,getAverageErrorByRodas
 
     export Taylor0,mulT,mulTT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT
 
@@ -77,6 +82,8 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     
     #QSSFamily/common/
     include("Common/Solution.jl")
+    include("Common/SolutionPlot.jl")
+    include("Common/SolutionError.jl")
     include("Common/QSSNLProblemHelper.jl")
     include("Common/QSSNLProblem.jl")
     include("Common/indexMacro.jl")
@@ -95,6 +102,6 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
 
 
-end # module
+
 
 end # module

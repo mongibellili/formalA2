@@ -1,4 +1,5 @@
-using OrdinaryDiffEq
+#using OrdinaryDiffEq
+using DifferentialEquations
 #using qssv01
 using BenchmarkTools
 using Plots
@@ -40,7 +41,7 @@ du[3] = u[1] - u[3] =#
       du[3] = 3.835*(u[1]-u[3]) =#
 
     end
-    tspan = (0.0,10.0)
+    tspan = (0.0,1.0)
     u0 = [1.0,0.0,0.0]
     prob = ODEProblem(funcName,u0,tspan)
     sol = solve(prob,BS3(),saveat=0.05,abstol = 1e-6, reltol = 1e-3)
@@ -52,10 +53,14 @@ du[3] = u[1] - u[3] =#
    
 
 
-    p1=plot!(sol,marker=(:circle),ylims=(0,1))
+   # p1=plot(sol,idxs = (0, 1)#= ,marker=(:circle),ylims=(0,1) =#)
+    display(plot(sol, idxs = (0, 2),legend = false))
+    println("press enter to exit")
+  readline()
+   # p1=plot!(sol[2],marker=(:circle),ylims=(0,1))
    # display(plot!(sol,xlims=(100,160),ylims=(-0.000002,0.000002)))
   #  display(plot!(sol,xlims=(10.0,10.0005),ylims=(-0.49971,-0.49960)))
-  savefig(p1, "plot_sysOREGONATOR_bs3_1e-3_ft20.png")
+  #savefig(p1, "plot_sysOREGONATOR_bs3_1e-3_ft20.png")
     
 end
 #@time 

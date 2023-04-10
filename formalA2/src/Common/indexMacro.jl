@@ -1,5 +1,6 @@
 macro NLodeProblem(odeExprs)
     Base.remove_linenums!(odeExprs)
+   # println("begin normal macro")
     NLodeProblem(odeExprs)
   #path="/home/unknown/relaxedqssA/relaxedqssA/src/models/loopToBody.jl"
 #=   path="./loopToBody.jl"
@@ -7,11 +8,12 @@ macro NLodeProblem(odeExprs)
   open(path, "a") do io  println(io,string(newFun))  end =#
 end
 macro NLodeProblemLoop(odeExprs)
+   # println("begin loop unrol")
     Base.remove_linenums!(odeExprs)
     code = Expr(:block)
     postwalk(odeExprs) do loop
-        if @capture(loop, for var_ in 1:niter_ loopbody__ end)
-            for i in 1:niter
+        if @capture(loop, for var_ in b_:niter_ loopbody__ end)
+            for i in b:niter
                 ex = postwalk(a -> a  == var ? i : a, loopbody[1]) # obtain ex = the body of the loop with counter changed to actual number
                 v=postwalk(ex) do a  # this is to change for example 5+1 to 6 in vect indices
                     if a isa Expr && a.head == :ref && a.args[2] isa Expr # counter outside ref still not handeled...init cond or used in equations.later***************************************************************
@@ -30,7 +32,7 @@ macro NLodeProblemLoop(odeExprs)
    # section that deletes not needed for loop
     indexArgsLoop=0
     postwalk(odeExprs) do loop
-        if @capture(loop, for var_ in 1:niter_ loopbody__ end)
+        if @capture(loop, for var_ in b_:niter_ loopbody__ end)
             indexArgsLoop = findall(x->x==loop, odeExprs.args)[1]
         end
         return loop
@@ -43,6 +45,8 @@ macro NLodeProblemLoop(odeExprs)
     pop!(odeExprs.args)
     end
     #e,nd of section that deletes for loop
+   # @show odeExprs
+  #println("end unroll loop")
   NLodeProblem(odeExprs)
   #path="/home/unknown/relaxedqssA/relaxedqssA/src/models/loopToBody.jl"
 #=   path="./loopToBody.jl"

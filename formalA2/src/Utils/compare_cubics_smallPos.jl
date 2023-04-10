@@ -201,7 +201,7 @@ function cubic4(a::Float64, b::Float64, c::Float64, d::Float64) #Cardano’s met
   end
   return res#,res2#,res3
 end
-#= function cubic5(a::Float64, b::Float64, c::Float64, d::Float64) #
+function cubic5(a::Float64, b::Float64, c::Float64, d::Float64) #
   _a = 1.0 / a
   b, c, d = b * _a, c * _a, d * _a
   m = b < c ? b : c
@@ -240,8 +240,8 @@ end
   x = x₁ > 0.0 ? x₁ : Inf#typemax(Float64)
   x₂ > 0.0 && x₂ < x ? x₂ : x
   end
-end =#
-function cubic5(a::Float64, b::Float64, c::Float64, d::Float64) #
+end
+function cubic55(a::Float64, b::Float64, c::Float64, d::Float64) #
   _a = 1.0 / a
   b, c, d = b * _a, c * _a, d * _a
   m = b < c ? b : c
@@ -281,7 +281,7 @@ function cubic5(a::Float64, b::Float64, c::Float64, d::Float64) #
   x₂ > -eps(Float64) && x₂ < x ? x₂ : x
   end
 end
-function cubic(coeffs::NTuple{4,Float64})#
+function cubic6(coeffs::NTuple{4,Float64})#
   _a = 1.0 / coeffs[4]
   b, c, d = coeffs[3] * _a, coeffs[2] * _a, coeffs[1] * _a
   m = b < c ? b : c
@@ -365,13 +365,13 @@ end
 #= 
 d=1e-6
 
-a=-5.144241008311048e7
+#= a=-5.144241008311048e7
 b=-8938.381530578772
-c=-0.2906652780025244
+c=-0.2906652780025244 =#
 
-#= c=-0.040323840000000166
+c=-0.040323840000000166
 b=-3914.116824448214
-a=1.021243315770821e8  =#
+a=1.021243315770821e8 
 
 @show cubic1(a,b,c,d)#-0.8186606842427812
 @show cubic2(a,b,c,d) #Inf
@@ -383,4 +383,5 @@ coeffs2=NTuple{4,Float64}((d,c,b,a))
 coeffs3=@SVector [d,c,b,a]
 
 @show cubic7(coeffs3)
-@show cubic6(coeffs2) =#
+@show cubic6(coeffs2)
+ =#

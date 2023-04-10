@@ -306,7 +306,7 @@ function test43()
    
 end
 test43()=#
-function test44()
+#= function test44()
     u1, u2 = -0.1144790629155213, -0.13539593708447864
     λ1, λ2 = -10.841674966758294, -9.168325033241706
    
@@ -325,7 +325,7 @@ function test44()
         i=i+0.01
     end
 end
-test44()  
+test44()  =# 
 #=  function test45()
    
     u1, u2 = -0.1144790629155213, -0.13539593708447864
@@ -346,7 +346,7 @@ end
 test45()  =#
 
 
-#= function test51()
+ function test51()
     u1, u2 = -8.73522174738572, -7.385745994549763
     λ1, λ2 = -10.841674966758294, -9.168325033241706
     c1, c2 = 11.68712513430148, -13.68712513430148
@@ -354,7 +354,7 @@ test45()  =#
     x1(t)=c1*u1*exp(λ1*t)+c2*u2*exp(λ2*t)+xp1
     x2(t)=c1*exp(λ1*t)+c2*exp(λ2*t)+xp2
     p1=plot()
-    p1=plot!(p1,x1,title="B51",label="x1",xlims=(0,100),)
+    p1=plot!(p1,x1,title="B51",label="x1",xlims=(0,0.5),)
     p1=plot!(p1,x2,label="x2")
     savefig(p1, "plot_B51 Analytic_FT100.png")
    #=  @show x2(0.01)
@@ -362,7 +362,7 @@ test45()  =#
     @show x2(1.0) =#
 end
 test51()
-
+#=
 function test52()
    
     u1, u2 = -8.73522174738572, -7.385745994549763

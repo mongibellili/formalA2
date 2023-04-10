@@ -1,7 +1,26 @@
-using formalA2
+using relaxedqssAC
 
 
-#= function test12()
+#= 
+
+function test11()
+    odeprob = @NLodeProblem begin
+         #sys b11
+        u = [-1.0, -2.0]
+        discrete = [0.0]
+        du[1] = 0.15*u[1]+0.25*u[2]
+        du[2] =-7.0*u[1]-4.0*u[2]
+       
+    end
+  
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B12") #any location you want
+    #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
+    plotSol(solmliqss1) =#
+   
+end
+test11()
+
+ function test12()
     odeprob = @NLodeProblem begin
          #sys b11
         u = [-1.0, -2.0]
@@ -11,7 +30,7 @@ using formalA2
        
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B12") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B12") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -29,7 +48,7 @@ function test13()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B13") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B13") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -47,7 +66,7 @@ function test14()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B14") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B14") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -65,7 +84,7 @@ function test15()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B15") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B15") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -83,7 +102,7 @@ function test21()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B21") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B21") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -95,14 +114,14 @@ function test22()
          #sys b22
         u = [-1.0, -2.0]
         discrete = [0.0]
-        du[1] = 0.1*u[1]+0.25*u[2]-0.05
-        du[2] =-4.0*u[1]-7.0*u[2]-1.0
+        du[1] = 0.1*u[1]+0.25*u[2]-0.25
+        du[2] =-4.0*u[1]-7.0*u[2]+7.0
 
        
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B22") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B222") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -122,7 +141,7 @@ function test23()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B23") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B23") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -141,7 +160,7 @@ function test24()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B24") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B24") #any location you want
     #= solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1)
     =#
@@ -161,7 +180,7 @@ function test25()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B25") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B25") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -181,7 +200,7 @@ function test31()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B31") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B31") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -201,7 +220,7 @@ function test32()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B32") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B32") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -221,7 +240,7 @@ function test33()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B33") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B33") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -241,7 +260,7 @@ function test34()
 
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B34") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B34") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
@@ -255,13 +274,13 @@ function test35()
         du[1] = -0.25*u[1]+0.15*u[2]-0.65
         du[2] =-4.0*u[1]-7.0*u[2]-1.0
     end
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B35") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B35") #any location you want
    #=  solmliqss1=QSS_Solve(odeprob,800.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
     plotSol(solmliqss1) =#
    
 end
-test35() =#
-#= function test41()
+test35() 
+ function test41()
     odeprob = @NLodeProblem begin
          #sys b41
         u = [-1.0, -2.0]
@@ -270,7 +289,7 @@ test35() =#
         du[2] =-80.0*u[1]-20.0*u[2]
        
     end  
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B41") #any location you want   
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B41") #any location you want   
 end
 test41()
 function test42()
@@ -281,7 +300,7 @@ function test42()
         du[1] = -0.01*u[1]+1.24*u[2]-1.24
         du[2] =-80.0*u[1]-20.0*u[2]+20.0      
     end
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B42") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B42") #any location you want
 end
 test42()
 function test43()
@@ -292,7 +311,7 @@ function test43()
         du[1] = -0.01*u[1]+1.24*u[2]-24.8
         du[2] =-80.0*u[1]-20.0*u[2]+400.0
     end 
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B43") #any location you want 
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B43") #any location you want 
 end
 test43()
 function test44()
@@ -300,25 +319,25 @@ function test44()
          #sys b44
         u = [-1.0, -2.0]
         discrete = [0.0]
-        du[1] = -0.01*u[1]+1.24*u[2]+0.0124
+        du[1] = -0.01*u[1]+1.24*u[2]-0.0124
         du[2] =-80.0*u[1]-20.0*u[2]+0.2
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B44") #any location you want  
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B44") #any location you want  
 end
-test44()
+test44() =#
 function test45()
     odeprob = @NLodeProblem begin         
         #sys b45
         u = [-1.0, -2.0]
         discrete = [0.0]
-        du[1] = -0.01*u[1]+1.24*u[2]+2.49
-        du[2] =-80.0*u[1]-20.0*u[2]+40.0
+        du[1] = -0.01*u[1]+1.24*u[2]-1.26
+        du[2] =-80.0*u[1]-20.0*u[2]-140.0
     end
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B45") #any location you want 
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B455") #any location you want 
 end
-test45() =#
-
+test45() 
+#= 
 function test51()
     odeprob = @NLodeProblem begin
          #sys b51
@@ -328,10 +347,10 @@ function test51()
          du[2] =1.24*u[1]-0.01*u[2]
        
     end  
-    save_prob_to_model(odeprob,"/home/unknown/formalA2/formalA2/src/models/InvestigateBProblem.jl","B51") #any location you want   
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B51") #any location you want   
 end
 test51()
-#= function test52()
+ function test52()
     odeprob = @NLodeProblem begin
          #sys b52
         u = [-1.0, -2.0]
@@ -339,7 +358,7 @@ test51()
         du[1] = -20.0*u[1]-80.0*u[2]+80.0
         du[2] =1.24*u[1]-0.01*u[2]+0.01      
     end
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B52") #any location you want
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B52") #any location you want
 end
 test52()
 function test53()
@@ -350,7 +369,7 @@ function test53()
         du[1] = -20.0*u[1]-80.0*u[2]+1600.0
         du[2] =1.24*u[1]-0.01*u[2]+0.2
     end 
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B53") #any location you want 
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B53") #any location you want 
 end
 test53()
 function test54()
@@ -362,7 +381,7 @@ function test54()
         du[2] =1.24*u[1]-0.01*u[2]+0.0001
     end
   
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B54") #any location you want  
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B54") #any location you want  
 end
 test54()
 function test55()
@@ -373,6 +392,6 @@ function test55()
         du[1] = -20.0*u[1]-80.0*u[2]+40.0
         du[2] =1.24*u[1]-0.01*u[2]+2.49
     end
-    save_prob_to_model(odeprob,"/home/unknown/formalqssAB/formalqssAB/src/models/InvestigateBProblem.jl","B55") #any location you want 
+    save_prob_to_model(odeprob,"/home/unknown/models/BProblem.jl","B55") #any location you want 
 end
-test55() =#
+test55()  =#
