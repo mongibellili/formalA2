@@ -58,15 +58,18 @@ end
 qss1()=Val(1)
 qss2()=Val(2)
 qss3()=Val(3)
-liqss1()=Val(4)
-liqss2()=Val(5)
-liqss3()=Val(6)
-mliqss1()=Val(7)
-mliqss2()=Val(8)
-mliqss3()=Val(9)
-nmliqss1()=Val(10)
-nmliqss2()=Val(11)
-nmliqss3()=Val(12)
+nmliqss1()=Val(4)
+nmliqss2()=Val(5)
+nmliqss3()=Val(6)
+nliqss1()=Val(7)
+nliqss2()=Val(8)
+nliqss3()=Val(9)
+mliqss1()=Val(10)
+mliqss2()=Val(11)
+mliqss3()=Val(12)
+liqss1()=Val(13)
+liqss2()=Val(14)
+liqss3()=Val(15)
 
 function getOrderfromSolverMethod(::Val{V}) where {V}  # @generated and inline did not enhance performance  
     if V==1 || V==2 || V==3
@@ -75,8 +78,10 @@ function getOrderfromSolverMethod(::Val{V}) where {V}  # @generated and inline d
         return V-3
     elseif V==7 || V==8 || V==9
         return V-6
-    else
+    elseif V==10 || V==11 || V==12
         return V-9
+    else
+        return V-12
     end
 end
 
@@ -202,11 +207,13 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,Z,Y},finalTime::Float
         olddx = zeros(MVector{T,MVector{order,Float64}})
         liqssdata= LiQSS_data(u,tu,qaux,olddx,quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,order,savedVars,savedTimes,taylorOpsCache,finalTime,savetimeincrement, initialTime,dQmin,dQrel,maxErr)
         if V==4 || V==5 || V==6
-            LiQSS_integrate(Val(V-3),liqssdata,prob,f)
+            nmLiQSS_integrate(Val(V-3),liqssdata,prob,f)
         elseif V==7 || V==8 || V==9
-            mLiQSS_integrate(Val(V-6),liqssdata,prob,f)
+            nLiQSS_integrate(Val(V-6),liqssdata,prob,f)
+        elseif V==10 || V==11 || V==12
+            mLiQSS_integrate(Val(V-9),liqssdata,prob,f)
         else
-            nmLiQSS_integrate(Val(V-9),liqssdata,prob,f)
+            LiQSS_integrate(Val(V-12),liqssdata,prob,f)
         end
     end
     #print_timer()

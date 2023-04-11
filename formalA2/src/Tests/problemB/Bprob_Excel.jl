@@ -8,7 +8,7 @@ using BenchmarkTools
 using BSON =#
 include("/home/unknown/models/BProblem.jl")
 #include("d://BProblem.jl") 
- function test11(ft::Float64,solver::Val{V})where {V} 
+#=  function test11(ft::Float64,solver::Val{V})where {V} 
     
 
   solmliqss2=QSS_Solve_from_model(B11,probB11(),ft,solver,saveat(0.01),0.0,1e-6,1e-3)
@@ -501,8 +501,7 @@ end
 function test53(ft::Float64,solver::Val{V})where {V} 
    # BSON.@load "sysB/relaxedAE_sysB53_mliqss2_errorE-3_step0.1_ft1000_Interp.bson" solmliqss2Interp
     solmliqss2=QSS_Solve_from_model(B53,probB53(),ft,solver,saveat(0.01),0.0,1e-6,1e-3)
-    save_Sol(solmliqss2)
-   #=  solmliqss2Interp=solInterpolated(solmliqss2,0.1,1000.0)
+    solmliqss2Interp=solInterpolated(solmliqss2,0.1,1000.0)
     u1, u2 = -8.73522174738572, -7.385745994549763
     λ1, λ2 = -10.841674966758294, -9.168325033241706
    
@@ -513,10 +512,8 @@ function test53(ft::Float64,solver::Val{V})where {V}
  
     er1=getError(solmliqss2Interp,1,x1)  
     er2=getError(solmliqss2Interp,2,x2) 
- 
-
      ("B53",(er1+er2)/2,solmliqss2.totalSteps,solmliqss2.simulStepCount)
-    =#
+   
 end
 function test54(ft::Float64,solver::Val{V})where {V} 
     #BSON.@load "sysB/relaxedAE_sysB54_mliqss2_errorE-3_step0.1_ft1000_Interp.bson" solmliqss2Interp
@@ -548,75 +545,341 @@ function test55(ft::Float64,solver::Val{V})where {V}
     er2=getError(solmliqss2Interp,2,x2) 
       ("B55",(er1+er2)/2,solmliqss2.totalSteps,solmliqss2.simulStepCount)
    
-end
+end =#
  
-function globaltest()
-ft=1000.0
-solver=liqss2()
-test53(ft,solver)
-#= result22=test53(ft,solver)
-@show result22 =#
-#= result11=test11(ft,solver)
-result12=test12(ft,solver)
-result13=test13(ft,solver)
-result14=test14(ft,solver)
-result15=test15(ft,solver)
-result21=test21(ft,solver)
-result22=test22(ft,solver)
-result23=test23(ft,solver)
-result24=test24(ft,solver)
-result25=test25(ft,solver)
-result31=test31(ft,solver)
-result32=test32(ft,solver)
-result33=test33(ft,solver)
-result34=test34(ft,solver)
-result35=test35(ft,solver)
-result41=test41(ft,solver)
-result42=test42(ft,solver)
-result43=test43(ft,solver)
-result44=test44(ft,solver) 
-result45=test45(ft,solver) 
-result51=test51(ft,solver)
-result52=test52(ft,solver)
-result53=test53(ft,solver)
-result54=test54(ft,solver) 
-result55=test55(ft,solver) 
+#= function liqsstest()
+          ft=1000.0
+          solver=liqss2()
+          test53(ft,solver)
+          #= result22=test53(ft,solver)
+          @show result22 =#
+          result11=test11(ft,solver)
+          result12=test12(ft,solver)
+          result13=test13(ft,solver)
+          result14=test14(ft,solver)
+          result15=test15(ft,solver)
+          result21=test21(ft,solver)
+          result22=test22(ft,solver)
+          result23=test23(ft,solver)
+          result24=test24(ft,solver)
+          result25=test25(ft,solver)
+          result31=test31(ft,solver)
+          result32=test32(ft,solver)
+          result33=test33(ft,solver)
+          result34=test34(ft,solver)
+          result35=test35(ft,solver)
+          result41=test41(ft,solver)
+          result42=test42(ft,solver)
+          result43=test43(ft,solver)
+          result44=test44(ft,solver) 
+          result45=test45(ft,solver) 
+          result51=test51(ft,solver)
+          result52=test52(ft,solver)
+          result53=test53(ft,solver)
+          result54=test54(ft,solver) 
+          result55=test55(ft,solver) 
 
 
-XLSX.openxlsx("Liqss2_ajjupdate_upfront_____.xlsx", mode="w") do xf
-  sheet = xf[1]
-  sheet["A1"] = "Liqss2_ajj_update_upfront"
-  sheet["A4"] = collect(("Sys","error","totalSteps","simul_steps"))
-  sheet["A5"] = collect(result11)
-  sheet["A6"] = collect(result12)
-  sheet["A7"] = collect(result13)
-  sheet["A8"] = collect(result14)
-  sheet["A9"] = collect(result15)
-  sheet["A10"] = collect(result21)
-  sheet["A11"] = collect(result22)
-  sheet["A12"] = collect(result23)
-  sheet["A13"] = collect(result24)
-  sheet["A14"] = collect(result25)
+          XLSX.openxlsx("Liqss2______.xlsx", mode="w") do xf
+          sheet = xf[1]
+          sheet["A1"] = "Liqss2_"
+          sheet["A4"] = collect(("Sys","error","totalSteps","simul_steps"))
+          sheet["A5"] = collect(result11)
+          sheet["A6"] = collect(result12)
+          sheet["A7"] = collect(result13)
+          sheet["A8"] = collect(result14)
+          sheet["A9"] = collect(result15)
+          sheet["A10"] = collect(result21)
+          sheet["A11"] = collect(result22)
+          sheet["A12"] = collect(result23)
+          sheet["A13"] = collect(result24)
+          sheet["A14"] = collect(result25)
 
-  sheet["A15"] = collect(result31)
-  sheet["A16"] = collect(result32)
-  sheet["A17"] = collect(result33)
-  sheet["A18"] = collect(result34)
-  sheet["A19"] = collect(result35)
+          sheet["A15"] = collect(result31)
+          sheet["A16"] = collect(result32)
+          sheet["A17"] = collect(result33)
+          sheet["A18"] = collect(result34)
+          sheet["A19"] = collect(result35)
 
-  sheet["A20"] = collect(result41)
-  sheet["A21"] = collect(result42)
-  sheet["A22"] = collect(result43)
-  sheet["A23"] = collect(result44) 
-  sheet["A24"] = collect(result45)
-  sheet["A25"] = collect(result51)
-  sheet["A26"] = collect(result52)
-  sheet["A27"] = collect(result53)
-  sheet["A28"] = collect(result54)
-  sheet["A29"] = collect(result55)
-end   =#
-
-
+          sheet["A20"] = collect(result41)
+          sheet["A21"] = collect(result42)
+          sheet["A22"] = collect(result43)
+          sheet["A23"] = collect(result44) 
+          sheet["A24"] = collect(result45)
+          sheet["A25"] = collect(result51)
+          sheet["A26"] = collect(result52)
+          sheet["A27"] = collect(result53)
+          sheet["A28"] = collect(result54)
+          sheet["A29"] = collect(result55)
+          end  
 end
 #@time
- globaltest()
+liqsstest()
+ function mliqsstest()
+     ft=1000.0
+     solver=mliqss2()
+     test53(ft,solver)
+     #= result22=test53(ft,solver)
+     @show result22 =#
+     result11=test11(ft,solver)
+     result12=test12(ft,solver)
+     result13=test13(ft,solver)
+     result14=test14(ft,solver)
+     result15=test15(ft,solver)
+     result21=test21(ft,solver)
+     result22=test22(ft,solver)
+     result23=test23(ft,solver)
+     result24=test24(ft,solver)
+     result25=test25(ft,solver)
+     result31=test31(ft,solver)
+     result32=test32(ft,solver)
+     result33=test33(ft,solver)
+     result34=test34(ft,solver)
+     result35=test35(ft,solver)
+     result41=test41(ft,solver)
+     result42=test42(ft,solver)
+     result43=test43(ft,solver)
+     result44=test44(ft,solver) 
+     result45=test45(ft,solver) 
+     result51=test51(ft,solver)
+     result52=test52(ft,solver)
+     result53=test53(ft,solver)
+     result54=test54(ft,solver) 
+     result55=test55(ft,solver) 
+
+
+     XLSX.openxlsx("mLiqss2______.xlsx", mode="w") do xf
+     sheet = xf[1]
+     sheet["A1"] = "mLiqss2_"
+     sheet["A4"] = collect(("Sys","error","totalSteps","simul_steps"))
+     sheet["A5"] = collect(result11)
+     sheet["A6"] = collect(result12)
+     sheet["A7"] = collect(result13)
+     sheet["A8"] = collect(result14)
+     sheet["A9"] = collect(result15)
+     sheet["A10"] = collect(result21)
+     sheet["A11"] = collect(result22)
+     sheet["A12"] = collect(result23)
+     sheet["A13"] = collect(result24)
+     sheet["A14"] = collect(result25)
+
+     sheet["A15"] = collect(result31)
+     sheet["A16"] = collect(result32)
+     sheet["A17"] = collect(result33)
+     sheet["A18"] = collect(result34)
+     sheet["A19"] = collect(result35)
+
+     sheet["A20"] = collect(result41)
+     sheet["A21"] = collect(result42)
+     sheet["A22"] = collect(result43)
+     sheet["A23"] = collect(result44) 
+     sheet["A24"] = collect(result45)
+     sheet["A25"] = collect(result51)
+     sheet["A26"] = collect(result52)
+     sheet["A27"] = collect(result53)
+     sheet["A28"] = collect(result54)
+     sheet["A29"] = collect(result55)
+     end  
+end
+mliqsstest()
+function nliqsstest()
+     ft=1000.0
+     solver=nliqss2()
+     test53(ft,solver)
+     #= result22=test53(ft,solver)
+     @show result22 =#
+     result11=test11(ft,solver)
+     result12=test12(ft,solver)
+     result13=test13(ft,solver)
+     result14=test14(ft,solver)
+     result15=test15(ft,solver)
+     result21=test21(ft,solver)
+     result22=test22(ft,solver)
+     result23=test23(ft,solver)
+     result24=test24(ft,solver)
+     result25=test25(ft,solver)
+     result31=test31(ft,solver)
+     result32=test32(ft,solver)
+     result33=test33(ft,solver)
+     result34=test34(ft,solver)
+     result35=test35(ft,solver)
+     result41=test41(ft,solver)
+     result42=test42(ft,solver)
+     result43=test43(ft,solver)
+     result44=test44(ft,solver) 
+     result45=test45(ft,solver) 
+     result51=test51(ft,solver)
+     result52=test52(ft,solver)
+     result53=test53(ft,solver)
+     result54=test54(ft,solver) 
+     result55=test55(ft,solver) 
+
+
+     XLSX.openxlsx("nLiqss2______.xlsx", mode="w") do xf
+     sheet = xf[1]
+     sheet["A1"] = "nLiqss2_"
+     sheet["A4"] = collect(("Sys","error","totalSteps","simul_steps"))
+     sheet["A5"] = collect(result11)
+     sheet["A6"] = collect(result12)
+     sheet["A7"] = collect(result13)
+     sheet["A8"] = collect(result14)
+     sheet["A9"] = collect(result15)
+     sheet["A10"] = collect(result21)
+     sheet["A11"] = collect(result22)
+     sheet["A12"] = collect(result23)
+     sheet["A13"] = collect(result24)
+     sheet["A14"] = collect(result25)
+
+     sheet["A15"] = collect(result31)
+     sheet["A16"] = collect(result32)
+     sheet["A17"] = collect(result33)
+     sheet["A18"] = collect(result34)
+     sheet["A19"] = collect(result35)
+
+     sheet["A20"] = collect(result41)
+     sheet["A21"] = collect(result42)
+     sheet["A22"] = collect(result43)
+     sheet["A23"] = collect(result44) 
+     sheet["A24"] = collect(result45)
+     sheet["A25"] = collect(result51)
+     sheet["A26"] = collect(result52)
+     sheet["A27"] = collect(result53)
+     sheet["A28"] = collect(result54)
+     sheet["A29"] = collect(result55)
+     end  
+end
+#@time
+nliqsstest()
+function nmliqsstest()
+          ft=1000.0
+          solver=nmliqss2()
+          test53(ft,solver)
+          #= result22=test53(ft,solver)
+          @show result22 =#
+          result11=test11(ft,solver)
+          result12=test12(ft,solver)
+          result13=test13(ft,solver)
+          result14=test14(ft,solver)
+          result15=test15(ft,solver)
+          result21=test21(ft,solver)
+          result22=test22(ft,solver)
+          result23=test23(ft,solver)
+          result24=test24(ft,solver)
+          result25=test25(ft,solver)
+          result31=test31(ft,solver)
+          result32=test32(ft,solver)
+          result33=test33(ft,solver)
+          result34=test34(ft,solver)
+          result35=test35(ft,solver)
+          result41=test41(ft,solver)
+          result42=test42(ft,solver)
+          result43=test43(ft,solver)
+          result44=test44(ft,solver) 
+          result45=test45(ft,solver) 
+          result51=test51(ft,solver)
+          result52=test52(ft,solver)
+          result53=test53(ft,solver)
+          result54=test54(ft,solver) 
+          result55=test55(ft,solver) 
+
+
+          XLSX.openxlsx("nmLiqss2______.xlsx", mode="w") do xf
+          sheet = xf[1]
+          sheet["A1"] = "nmLiqss2_"
+          sheet["A4"] = collect(("Sys","error","totalSteps","simul_steps"))
+          sheet["A5"] = collect(result11)
+          sheet["A6"] = collect(result12)
+          sheet["A7"] = collect(result13)
+          sheet["A8"] = collect(result14)
+          sheet["A9"] = collect(result15)
+          sheet["A10"] = collect(result21)
+          sheet["A11"] = collect(result22)
+          sheet["A12"] = collect(result23)
+          sheet["A13"] = collect(result24)
+          sheet["A14"] = collect(result25)
+
+          sheet["A15"] = collect(result31)
+          sheet["A16"] = collect(result32)
+          sheet["A17"] = collect(result33)
+          sheet["A18"] = collect(result34)
+          sheet["A19"] = collect(result35)
+
+          sheet["A20"] = collect(result41)
+          sheet["A21"] = collect(result42)
+          sheet["A22"] = collect(result43)
+          sheet["A23"] = collect(result44) 
+          sheet["A24"] = collect(result45)
+          sheet["A25"] = collect(result51)
+          sheet["A26"] = collect(result52)
+          sheet["A27"] = collect(result53)
+          sheet["A28"] = collect(result54)
+          sheet["A29"] = collect(result55)
+          end  
+end
+nmliqsstest() =#
+############################################"
+
+
+function test53only(ft::Float64,solver::Val{V})where {V} 
+     # BSON.@load "sysB/relaxedAE_sysB53_mliqss2_errorE-3_step0.1_ft1000_Interp.bson" solmliqss2Interp
+     solmliqss2=QSS_Solve_from_model(B53,probB53(),ft,solver,saveat(0.01),0.0,1e-6,1e-3)
+     solmliqss2Interp=solInterpolated(solmliqss2,0.1,1000.0)
+     save_Sol(solmliqss2,"x1",1;xlims=(30.0,40.0),ylims=(-0.05,0.05))
+     u1, u2 = -8.73522174738572, -7.385745994549763
+     λ1, λ2 = -10.841674966758294, -9.168325033241706
+     
+     c1, c2 = 121.14809142478035, -143.14809142478035
+     xp1, xp2 = 0.0, 20.0
+     x1(t)=c1*u1*exp(λ1*t)+c2*u2*exp(λ2*t)+xp1
+     x2(t)=c1*exp(λ1*t)+c2*exp(λ2*t)+xp2
+     
+     er1=getError(solmliqss2Interp,1,x1)  
+     er2=getError(solmliqss2Interp,2,x2) 
+          ("$(solmliqss2.algName)",(er1+er2)/2,solmliqss2.totalSteps,solmliqss2.simulStepCount)
+  end
+
+  
+function globaltest()
+          function liqsstestOneSys()
+               ft=1000.0
+               solver=liqss2()
+               test53only(ft,solver)
+          end
+          #@time
+          resultliqss2=liqsstestOneSys()
+          function mliqsstestOneSys()
+               ft=1000.0
+               solver=mliqss2()
+               test53only(ft,solver)
+          end
+          resultmliqss2=mliqsstestOneSys()
+          function nliqsstestOneSys()
+               ft=1000.0
+               solver=nliqss2()
+               test53only(ft,solver) 
+          end
+          #@time
+          resultnliqss2=nliqsstestOneSys()
+          function nmliqsstestOneSys()
+               ft=1000.0
+               solver=nmliqss2()
+               test53only(ft,solver)
+          end
+          resultnmliqss2=nmliqsstestOneSys()
+
+
+          XLSX.openxlsx("sys53 all solvers______.xlsx", mode="w") do xf
+               sheet = xf[1]
+               sheet["A1"] = "sys53 all solvers_"
+               sheet["A4"] = collect(("solver","error","totalSteps","simul_steps"))
+               sheet["A5"] = collect(resultliqss2)
+               sheet["A6"] = collect(resultmliqss2)
+               sheet["A7"] = collect(resultnliqss2)
+               sheet["A8"] = collect(resultnmliqss2)
+               
+      
+               end  
+
+end
+
+globaltest()

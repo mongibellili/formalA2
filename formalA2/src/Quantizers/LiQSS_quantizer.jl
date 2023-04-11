@@ -63,7 +63,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     #u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
     u1=x1-a*qaux[i][1]
     uv[i][i][1]=u1
-    uv[i][i][2]=x2-av[i][i]*q1
+   # uv[i][i][2]=x2-av[i][i]*q1
     u2=uv[i][i][2]
     tu[i]=simt  
     # olddx[i][2]=2*x2# 
@@ -182,7 +182,139 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     return h
 end
 
+function nupdateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::Vector{Vector{Float64}},uv::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
+    q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2];a=av[i][i]
+   
+   
+   
+    qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
+    qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
+   # tq[i]=simt
 
+   
+
+    olddx[i][1]=x1#appears only here...updated here and used in updateApprox   
+    #u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
+    u1=x1-a*qaux[i][1]
+    uv[i][i][1]=u1
+    uv[i][i][2]=x2-av[i][i]*q1
+    u2=uv[i][i][2]
+    tu[i]=simt  
+    # olddx[i][2]=2*x2# 
+    ddx=x2
+    
+    quan=quantum[i]
+    h=0.0
+    if a!=0.0
+        if ddx ==0.0
+             ddx=a*a*q+a*u1 +u2
+            if ddx==0.0 
+                ddx=1e-15# changing -40 to -6 nothing changed
+                #println("ddx=0")
+            end
+        end
+        h = ft-simt
+        #tempH1=h
+        #q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /(1 - h * a + h * h * a * a / 2)
+                 q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
+        
+        if (abs(q - x) >  quan) # removing this did nothing...check @btime later
+          h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
+          q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
+                   (1 - h * a + h * h * a * a / 2)
+          
+        end
+        maxIter=1000
+        tempH=h
+        while (abs(q - x) >  quan) && (maxIter>0) && (h>0)
+            
+          h = h *0.98*(quan / abs(q - x))
+          q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
+                   (1 - h * a + h * h * a * a / 2)
+          maxIter-=1
+         #=  if maxIter < 990
+                    println("maxiter of updateQ      = ",maxIter)
+                    @show  h, q-x
+                   
+           end =#
+        end
+        #= if maxIter < 900
+             println("maxiter of updateQ val2      = ",maxIter)
+            @show tempH, h, simt
+        end =#
+       #=  @show tempH1,tempH2
+        @show q-x
+        @show i,h, a, u1, u2  =#
+        q1=(a*q+u1+h*u2)/(1-h*a)  #later investigate 1=h*a
+       #=  @show q1
+        
+        @show -1.5775988642611344e-20-1.0842021724855044e-19+q-x+h*(q1-(a*q+u1))-h*h*(a*q1+u2)/2
+        coef=@SVector [-1.5775988642611344e-20-1.0842021724855044e-19+q-x , q1-(a*q+u1),-(a*q1+u2)/2]#
+      
+        hi = 0.0 + minPosRoot(coef, Val(2))
+        @show hi =#
+       #=  if abs(q-x)>2*quantum[i]#uncommenting this did nothing
+            println("at end of q update if side q-x >quan !!!! simt= ",simt)
+        end =#
+
+    else
+       # println("a=0")
+        #ddx=u2
+        #= if x2>0.0  #if ddx>0.0 same results
+            q=x+quan
+        else# elseif x2<0   ......else q=x??
+            q=x-quan
+        end =#
+        #q=x+quantum[i]  #works fine !!!
+       # q=x-quantum[i] #errors ...solution escapes up...later test if this behavior is specific to this problem or it is a general thing
+       # q=x+2*quantum[i]  #2*Δ errors solution escapes down
+       # q=x+quantum[i]   #removing it errors
+        if x2!=0.0
+          
+           h=sqrt(abs(2*quan/x2))   #sqrt necessary with u2
+           q=x-h*h*x2/2
+           q1=x1+h*x2
+
+
+            # q=x+h*x1+h*h*x2/2
+          # q=x-h*h*u2/2
+           # q1=u1+h*u2  #(250 allocations: 16.07 KiB)
+          #  @show h,x2,i,u1,u2
+        else
+           # println("x2==0")
+            if x1!=0.0
+                h=abs(quan/x1)
+                q=x+h*x1
+                q1=x1
+            else
+                h=Inf
+                q=x
+                q1=x1
+            end
+        #=q1=x1+h*x2  #(252 allocations: 16.07 KiB)
+        else
+            q1=x1 =#
+            #println("ddx=0")
+        end 
+       #=  if abs(q-x)>2*quantum[i]+1e-12#uncommenting this did nothing
+            println("at end of q update: else side, q-x >quan !!!! simt= ",simt,", q-x= ",q-x,", quan= ",quantum[i])
+        end =#
+    end
+    
+    #olddx[i][2]=ddx  #olddx[i][2] never used again so no need to update it 
+    qv[i][0]=q
+    qv[i][1]=q1  
+   # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
+   nextTime[i]=simt+h
+   #= if i==4
+    @show  q,q1
+    @show  x,x1,x2
+    @show x+x1*h+h*h*x2/2,x1+h*x2
+   @show  q+h*q1
+   @show nextTime[i],simt,h
+   end =#
+    return h
+end
 
 function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::Vector{Vector{Float64}},uv::Vector{Vector{MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64, nextTime::MVector{T,Float64})where{T,O}
     q=qv[i][0];q1=qv[i][1];q2=2*qv[i][2];x=xv[i][0];x1=xv[i][1];x2=2*xv[i][2];x3=6*xv[i][3];u1=uv[i][i][1];u2=uv[i][i][2];u3=uv[i][i][3]

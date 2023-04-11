@@ -1,13 +1,17 @@
 using formalA2
-#using formalqssA
+#using formalqss
+using XLSX
+using BSON
 #using BenchmarkTools
 #using Plots
-#using OrdinaryDiffEq
 
+#using OrdinaryDiffEq
 include("/home/unknown/models/Advection.jl")
 using BSON
 #include("D://Advection.jl") 
 function test()
+    
+    BSON.@load "bson_base/solVectAdvection_N10_Feagin14e-12.bson" solFeagin14VectorN10
     odeprob = @NLodeProblemLoop begin
         u =[1.0, 1.0, 1.0, 0.0, 0.0,0.0,0.0,0.0,0.0,0.0]
         discrete = [0.0]
@@ -21,17 +25,56 @@ function test()
         
     end
 
-    # solmliqss2=QSS_Solve(odeprob,10.0,mliqss2(),saveat(0.1),0.0,1e-6,1e-3)
-    #save_prob_to_model(odeprob,"d://Advection.jl","N10") #any location you want   
-   # solmliqss2=QSS_Solve(odeprob,10.0,mliqss2(),saveat(0.01),0.0,1e-3,1e-3)
+  #=   solmliqss2=QSS_Solve_from_model(N10,odeprob,10.0,liqss2(),saveat(0.01),0.0,1e-5,1e-5)
+    solmliqss2Interp=solInterpolated(solmliqss2,0.01,10.0)
+    err=getAverageErrorByRodas(solFeagin14VectorN10,solmliqss2Interp)
+    liqssRes= ("liqss",err,solmliqss2.totalSteps,solmliqss2.simulStepCount)
+    #save_Sol(solmliqss2,"x1",1;xlims=(0.0,10.0),ylims=(0.87585,0.8759))
+   #=  save_Sol(solmliqss2,"x2",2;xlims=(0.0,10.0),ylims=(0.98752,0.9876))
+    save_Sol(solmliqss2,"x3 ",3;xlims=(0.0,10.0),ylims=(0.99875,0.9988))
+    save_Sol(solmliqss2,"x4 ",4;xlims=(0.0,10.0),ylims=(0.99987,0.99990))
+    save_Sol(solmliqss2,"x5-x10 ",5,6,7,8,9,10;xlims=(0.0,10.0),ylims=(0.9999855,1.0001))
+ =#
     solmliqss2=QSS_Solve_from_model(N10,odeprob,10.0,mliqss2(),saveat(0.01),0.0,1e-5,1e-5)
-    #save_Sol(solmliqss2,"formalAEM",2,3,4,10;xlims=(0.0,1.0),ylims=(0.998,1.002))
-    #= solmliqss2Interp=solInterpolated(solmliqss2,0.01,0.6)
-    BSON.@save "solAdvection_N10_mliqss2e-6ft06.bson" solmliqss2Interp =#
-    save_Sol(solmliqss2,"NEWSimulmultipleUpdatemliqss___1e-5",3,4,5,6;xlims=(0.0,10.0),ylims=(0.99995,1.00002))
-  #save_Sol(solmliqss2)
-  
- #save_Sol(solmliqss2)
+    solmliqss2Interp=solInterpolated(solmliqss2,0.01,10.0)
+    err=getAverageErrorByRodas(solFeagin14VectorN10,solmliqss2Interp)
+    mliqssRes= ("mliqss",err,solmliqss2.totalSteps,solmliqss2.simulStepCount)
+   # save_Sol(solmliqss2,"x1",1;xlims=(0.0,10.0),ylims=(0.87585,0.8759))
+    #= save_Sol(solmliqss2,"x2",2;xlims=(0.0,10.0),ylims=(0.98752,0.9876))
+    save_Sol(solmliqss2,"x3 ",3;xlims=(0.0,10.0),ylims=(0.99875,0.9988))
+    save_Sol(solmliqss2,"x4 ",4;xlims=(0.0,10.0),ylims=(0.99987,0.99990))
+    save_Sol(solmliqss2,"x5-x6 ",5,6;xlims=(0.0,10.0),ylims=(0.99997,1.00001))
+    save_Sol(solmliqss2,"x7-x10 ",7,8,9,10;xlims=(0.0,10.0),ylims=(0.9999855,1.0001)) =#
+
+    solmliqss2=QSS_Solve_from_model(N10,odeprob,10.0,nliqss2(),saveat(0.01),0.0,1e-5,1e-5)
+    solmliqss2Interp=solInterpolated(solmliqss2,0.01,10.0)
+    err=getAverageErrorByRodas(solFeagin14VectorN10,solmliqss2Interp)
+    nliqssRes= ("nliqss",err,solmliqss2.totalSteps,solmliqss2.simulStepCount) =#
+   # save_Sol(solmliqss2,"x1",1;xlims=(0.0,10.0),ylims=(0.87585,0.8759))
+#=     save_Sol(solmliqss2,"x2",2;xlims=(0.0,10.0),ylims=(0.98752,0.9876))
+    save_Sol(solmliqss2,"x3 ",3;xlims=(0.0,10.0),ylims=(0.99875,0.9988))
+    save_Sol(solmliqss2,"x4 ",4;xlims=(0.0,10.0),ylims=(0.99987,0.99990))
+    save_Sol(solmliqss2,"x5-x10 ",5,6,7,8,9,10;xlims=(0.0,10.0),ylims=(0.9999855,1.0001)) =#
+
+    solmliqss2=QSS_Solve_from_model(N10,odeprob,10.0,nmliqss2(),saveat(0.01),0.0,1e-5,1e-5)
+    solmliqss2Interp=solInterpolated(solmliqss2,0.01,10.0)
+    err=getAverageErrorByRodas(solFeagin14VectorN10,solmliqss2Interp)
+    nmliqssRes= ("nmliqss",err,solmliqss2.totalSteps,solmliqss2.simulStepCount)
+    @show nmliqssRes
+   # save_Sol(solmliqss2,"x1",1;xlims=(0.0,10.0),ylims=(0.87585,0.8759))
+#=     save_Sol(solmliqss2,"x2",2;xlims=(0.0,10.0),ylims=(0.98752,0.9876))
+    save_Sol(solmliqss2,"x3 ",3;xlims=(0.0,10.0),ylims=(0.99875,0.9988))
+    save_Sol(solmliqss2,"x4 ",4;xlims=(0.0,10.0),ylims=(0.99987,0.99990))
+    save_Sol(solmliqss2,"x5-x10 ",5,6,7,8,9,10;xlims=(0.0,10.0),ylims=(0.9999855,1.0001)) =#
+  #=   XLSX.openxlsx("sysN10 all solvers___uii=x-ujj=x-___.xlsx", mode="w") do xf
+        sheet = xf[1]
+        sheet["A1"] = "sysN10 all solvers_"
+        sheet["A4"] = collect(("solver","error","totalSteps","simul_steps"))
+        sheet["A5"] = collect(liqssRes)
+        sheet["A6"] = collect(mliqssRes)
+        sheet["A7"] = collect(nliqssRes)
+        sheet["A8"] = collect(nmliqssRes)
+   end   =#
 end
 #@btime 
 test()

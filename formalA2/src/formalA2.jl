@@ -44,7 +44,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
 
     # list of public (API) to the user, not between files as those are linked as if in one file
-    export qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat
+    export qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat,nliqss1,nliqss2,nliqss3,nmliqss1,nmliqss2,nmliqss3
     export save_Sol#,stacksave_Sol,plotSol,stackplotSol,plot_save_Sol,stackplot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,save_SolVar,save_SolZoomed
     
     export plotRelativeError#,stackplotRelativeError,plot_save_RelativeError,stackplot_save_RelativeError,saveRelativeError,stacksaveRelativeError
@@ -96,6 +96,8 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("NL_integrators/NL_QSS_Integrator.jl")
     include("NL_integrators/NL_LiQSS_Integrator.jl")
     include("NL_integrators/NL_mLiQSS_Integrator.jl")
+    include("NL_integrators/NL_nLiQSS_Integrator.jl")
+    include("NL_integrators/NL_nmLiQSS_Integrator.jl")
     include("Quantizers/QSS_quantizer.jl")
     include("Quantizers/LiQSS_quantizer.jl")
     include("Quantizers/mLiQSS_quantizer.jl")

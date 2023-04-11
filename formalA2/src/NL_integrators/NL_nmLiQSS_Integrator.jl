@@ -103,7 +103,7 @@
   for i = 1:T
     savedVars[i][1].coeffs .= x[i].coeffs  #to be changed  1 2 3 ?
     quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
-    updateQ(Val(O),i,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,initTime,ft,nextStateTime) 
+    nupdateQ(Val(O),i,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,initTime,ft,nextStateTime) 
   end
   for i = 1:T
     clearCache(taylorOpsCache,cacheSize);f(i,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[i], taylorOpsCache[1],integratorCache,0.0)#0.0 used to be elapsed...even down below not neeeded anymore
@@ -132,11 +132,11 @@
   prevStepTime=initTime;prevStepVal = zeros(MVector{T,MVector{O+1,Float64}})
   for i = 1:T prevStepVal[i] .= x[i].coeffs end
   direction= zeros(MVector{T,Float64})
-  flag= zeros(MVector{T,Float64})
+  qminus= zeros(MVector{T,Float64})
   breakloop= zeros(MVector{1,Float64})
   #@timeit "while" 
   simul=false
-  buddySimul=0
+  buddySimul=[0,0]
   while simt < ft && totalSteps < 2000000
 
    
@@ -200,30 +200,34 @@
         else
        
         end      
-        updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,simt,ft,nextStateTime) ;tq[index] = simt   
-        Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
+        nupdateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,simt,ft,nextStateTime) ;tq[index] = simt   
+        Liqss_ComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
         olddxSpec[index][1]=x[index][1]
         #----------------------------------------------------check dependecy cycles---------------------------------------------      
-        #flag[index]=0.0
+        #qminus[index]=0.0
         simul=false
-        buddySimul=0
+        buddySimul=[0,0]
       for j in SD[index]
         
         if j!=index && a[index][j]*a[j][index]!=0  
-          if buddySimul==0      # allow single simul...later remove and allow multiple simul          
+          #if buddySimul==0      # allow single simul...later remove and allow multiple simul          
               
-              if isCycle_and_simulUpdate(Val(O),index,j,prevStepVal,direction,x,q,quantum,a,u,qaux,olddx,olddxSpec,tx,tq,tu,simt,ft,SD,flag,breakloop,nextStateTime)
+              if nisCycle_and_simulUpdate(Val(O),index,j,prevStepVal,direction,x,q,quantum,a,u,qaux,olddx,olddxSpec,tx,tq,tu,simt,ft,SD,qminus#= ,nextStateTime =#)
                 simulStepCount+=1   
                 simul=true  
-                #flag[index]=1.0  
-                buddySimul=j      
+                #qminus[index]=1.0  
+                if buddySimul[1]==0
+                   buddySimul[1]=j    
+                else
+                  buddySimul[2]=j 
+                end
                # for b = 1:T # elapsed update all other vars that these der i & j depend upon.needed for when sys has 3 or more vars.
                   for b in (jac[j]  )    
-                    elapsedq = simt - tq[b] ;if elapsedq>0 flag[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
+                    elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
                    # elapsedx = simt - tx[b];if elapsedx > 0 integrateState(Val(O),x[b],integratorCache,elapsedx);tx[b] = simt end
                   end
                   for b in ( jac[index] )    
-                    elapsedq = simt - tq[b] ;if elapsedq>0 flag[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
+                    elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
                    # elapsedx = simt - tx[b];if elapsedx > 0 integrateState(Val(O),x[b],integratorCache,elapsedx);tx[b] = simt end
                   end
                # end
@@ -251,47 +255,57 @@
                 updateOtherApprox(Val(O),j,index,x,q,a,u,qaux,olddxSpec,tu,simt)
                 Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
                 Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
-      
-                #= for l = 1:length(SD[j])
-                      k = SD[j][l]  =#
-                   for k in SD[j]
-                      if k != 0  && k!=index && k!=j
+
+                   for k in SD[j]  #j influences k
+                      if k!=index && k!=j
                         elapsedx = simt - tx[k]
-                        #if elapsedx > 0
                           x[k].coeffs[1] = x[k](elapsedx);tx[k] = simt
-                         
+                          elapsedq = simt - tq[k]
+                          if elapsedq > 0  qminus[k]=q[k][0];integrateState(Val(O-1),q[k],integratorCache,elapsedq); tq[k] = simt end
+                          for b in (jac[k]  )   
+                            elapsedq = simt - tq[b]
+                            if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
+                          end  
+
+                         # update akj #i want influence of j on dxk
                           if index in jac[k] # index also will influence xk
                             qjtemp=q[j][0];q[j][0]=qaux[j][1]
-                            clearCache(taylorOpsCache,cacheSize);f(k,-1,-1,q,d,t,taylorOpsCache);  #to get rid off index influence
+                            clearCache(taylorOpsCache,cacheSize);f(k,-1,-1,q,d,t,taylorOpsCache);  #to get rid off index influence for akj
                             olddxSpec[k][1]=taylorOpsCache[1][0]
                             q[j][0]=qjtemp 
                           else
                             differentiate!(integratorCache,x[k])
-                            x[k][1] = integratorCache(elapsedx)
-                            olddxSpec[k][1]=x[k][1]
+                            olddxSpec[k][1] = integratorCache(elapsedx)
                           end
+                          clearCache(taylorOpsCache,cacheSize);f(k,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[k], taylorOpsCache[1],integratorCache,elapsed)
+                          Liqss_reComputeNextTime(Val(O), k, simt, nextStateTime, x, q, quantum,a)
+                          updateOtherApprox(Val(O),k,j,x,q,a,u,qaux,olddxSpec,tu,simt)#
+
+
+                            ##########i want influence of k on k 
+                            if k in jac[k]
+                              qctemp=q[k][0];q[k][0]=qminus[k]# i want only the effect of qc on acc: remove influence of index and j
+                              clearCache(taylorOpsCache,cacheSize);f(k,-1,-1,q,d,t,taylorOpsCache);
+                              olddx[k][1]=taylorOpsCache[1][0]# acc =(dxc-oldxc)/(qc-qcminus)
+                              q[k][0]=qctemp
+                              nupdateLinearApprox(Val(O),k,x,q,a,u,qminus[k],olddx,tu,simt)# acc =(dxc-oldxc)/(qc-qcminus)
+                            else
+                              nupdateUaNull(Val(O),k,x,u,tu,simt)# acc==0
+                            end
+
+
+
+                          
 
 
                         #  olddx[k][1]=x[k][1]
-                          elapsedq = simt - tq[k]
-                          if elapsedq > 0     
-                            #= qaux[k][1]=q[k][0]; =#integrateState(Val(O-1),q[k],integratorCache,elapsedq); tq[k] = simt
-                          end
+                          
                        # end
                         
                         #= for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
                           if jac[k][b] != 0  =#    
-                        for b in (jac[k]  )   
-                            elapsedq = simt - tq[b]
-                            if elapsedq>0
-                              flag[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt
-                              #elapsedx = simt - tx[b];if elapsedx > 0 integrateState(Val(O),x[b],integratorCache,elapsedx);tx[b] = simt end
-                            end
-                         # end
-                        end                     
-                        clearCache(taylorOpsCache,cacheSize);f(k,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[k], taylorOpsCache[1],integratorCache,elapsed)
-                        Liqss_reComputeNextTime(Val(O), k, simt, nextStateTime, x, q, quantum,a)
-                        updateOtherApprox(Val(O),k,j,x,q,a,u,qaux,olddxSpec,tu,simt)#oldspec for this case is always==olddx
+                   
+
                        # updateLinearApprox(Val(O),k,x,q,a,u,qaux,olddx,tu,simt)
                       end#end if k!=0
                 end#end for k depend on j
@@ -311,7 +325,7 @@
                 end#end for SZ  =#                                       
                 updateLinearApprox(Val(O),j,x,q,a,u,qaux,olddx,tu,simt)             
               end#end ifcycle check
-         end #end if flag[index]
+         #end #end if allow one simulupdate
         end#end if j!=0
       end#end FOR_cycle check
 
@@ -319,63 +333,57 @@
       #---------------------------------normal liqss: proceed--------------------------------
       #-------------------------------------------------------------------------------------
   
-      for c in SD[index]
-       
-        if c==index || c==buddySimul
-           
+      for c in SD[index]   #index influences c
+        if c==buddySimul[1] || c==buddySimul[2] || (c==index && buddySimul[1]!=0)  # buddysimul!=0 means simulstep happened c==j already been taken care off under simul aci=aji already updated after simul and acc=ajj also updated at end of simul
+                                                       #and if  c==index acc && aci=aii to be updated below at end;
+        elseif c==index && buddySimul[1]==0  # simulstep did not happen; still no need to update acc & aci =aii (to be updated at end); only recomputeNext needed
+          for b in (jac[c]  )    # update other influences
+            elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
+          end
           clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache)
           computeDerivative(Val(O), x[c], taylorOpsCache[1],integratorCache,elapsed)
-          Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum,a)
-         
-        else
-
-
-                elapsedx = simt - tx[c]
-                 
-                  x[c].coeffs[1] = x[c](elapsedx);tx[c] = simt
+          Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum,a)    
+        else# c is another var; it needs aci & acc to be updated
+                  elapsedx = simt - tx[c]        
+                  if elapsedx>0 x[c].coeffs[1] = x[c](elapsedx);tx[c] = simt end # case simul happened c=k
                   elapsedq = simt - tq[c]
-                  if elapsedq > 0
-                    flag[c]=q[c][0]      # c never been visited 
+                  if elapsedq > 0 qminus[c]=q[c][0];integrateState(Val(O-1),q[c],integratorCache,elapsedq);tq[c] = simt    end   # c never been visited 
+                  for b in (jac[c]  )    # update other influences
+                    elapsedq = simt - tq[b] ;if elapsedq>0 qminus[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
                   end
 
-                  if buddySimul in jac[c] # j also will influence dxc
-
-
-                          for b in (jac[c]  )    
-                            elapsedq = simt - tq[b] ;if elapsedq>0 flag[b]=q[b][0];integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
-                          # elapsedx = simt - tx[b];if elapsedx > 0 integrateState(Val(O),x[b],integratorCache,elapsedx);tx[b] = simt end
-                          end
-
-                          qitemp=q[index][0];q[index][0]=qaux[index][1] #to get rid off buddySimul influence;we want only infleuce of index
-                          clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache);
-                          olddxSpec[c][1]=taylorOpsCache[1][0]
-                          q[index][0]=qitemp 
-
-                          qctemp=q[c][0];q[c][0]=flag[c]
-                          clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache);
-                          olddx[c][1]=taylorOpsCache[1][0]
-                          q[c][0]=qctemp
-                  else
+                  # update aci #i want influence of index on dxc
+                  if (buddySimul[1] in jac[c])||(buddySimul[2] in jac[c]) # simulupdate happened and qjthrown also will influence dxc 
+                    qitemp=q[index][0];q[index][0]=qaux[index][1] #to get rid off buddySimul influence;we want only infleuce of index to find aci
+                    clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache);
+                    olddxSpec[c][1]=taylorOpsCache[1][0]
+                    q[index][0]=qitemp    
+                  else#buddysimul ie j does not influence c (ie only index influences c) code for c as if no simulstep even if there was a simulupdate (c does not care)
                           differentiate!(integratorCache,x[c])
-                          x[c][1] = integratorCache(elapsedx)
-                          olddxSpec[c][1]=x[c][1]
-                          olddx[c][1]=x[c][1]
+                          olddxSpec[c][1] = integratorCache(elapsedx)# this (as if) updates all Qs involved in dxc (including index)
+                          # aci=(dxc-oldspec)/(qithrow-qielaps)   
                   end
 
-                  if elapsedq > 0
-                    flag[c]=q[c][0];integrateState(Val(O-1),q[c],integratorCache,elapsedq);tq[c] = simt         
-                  end
-       
-                 #=    for b in (jac[c]  )    
-                          elapsedq = simt - tq[b] ;if elapsedq>0 integrateState(Val(O-1),q[b],integratorCache,elapsedq);tq[b]=simt end
-               
-                     end =#
-                clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache)
-              # if x[c][1]!=taylorOpsCache[1][0]#if none of the above q changed then the der would be same and no need for wasting resources
+                  clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache)
                   computeDerivative(Val(O), x[c], taylorOpsCache[1],integratorCache,elapsed)
                   Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum,a)
-                  nupdateOtherApprox(Val(O),c,index,x,q,a,u,flag[c],olddxSpec,tu,simt)# Later inverstigate oldspec not updated when aij*aji=0 above
-                # updateLinearApprox(Val(O),c,x,q,a,u,qaux,olddx,tu,simt)
+                  updateOtherApprox(Val(O),c,index,x,q,a,u,qaux,olddxSpec,tu,simt)# 
+                  # update acc #i want influence of c on dxc
+                  if c in jac[c]
+                    qctemp=q[c][0];q[c][0]=qminus[c]# i want only the effect of qc on acc: remove influence of index and j
+                    clearCache(taylorOpsCache,cacheSize);f(c,-1,-1,q,d,t,taylorOpsCache);
+                    olddx[c][1]=taylorOpsCache[1][0]# acc =(dxc-oldxc)/(qc-qcminus)
+                    q[c][0]=qctemp
+                    nupdateLinearApprox(Val(O),c,x,q,a,u,qminus[c],olddx,tu,simt)# acc =(dxc-oldxc)/(qc-qcminus)
+                  else
+                    nupdateUaNull(Val(O),c,x,u,tu,simt)# acc==0
+                  end
+
+                
+
+               
+                  
+                
               # end
         end#end if c==index or else
       end#end for SD
@@ -505,7 +513,7 @@
               #------------event influences a Continete var: x already updated in event...here update quantum and q and computenext
               if evDep[modifiedIndex].evCont[i]!==NaN   # use 3 signs or nan() function
                   #quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
-                  q[i][0]=x[i][0];tx[i] = simt;tq[i] = simt # for liqss updateQ?
+                  q[i][0]=x[i][0];tx[i] = simt;tq[i] = simt # for liqss nupdateQ?
                 #  computeNextTime(Val(O), i, simt, nextStateTime, x, quantum) 
               end
             end
@@ -599,7 +607,7 @@
   end
   resize!(savedTimes,count)
  # print_timer()
-  Sol(O,savedTimes, savedVars,"mliqss$O",string(nameof(f)),numSteps,absQ,totalSteps,simulStepCount)
+  Sol(O,savedTimes, savedVars,"nmliqss$O",string(nameof(f)),numSteps,absQ,totalSteps,simulStepCount)
   end#end integrate
       
       
