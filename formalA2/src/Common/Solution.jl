@@ -1,21 +1,46 @@
-struct Sol{T}
-  order::Int
-  savedTimes::Vector{Float64} 
-  savedVars::Vector{Array{Taylor0{Float64}}}
+
+struct LightSol{T,O}<:Sol{T,O}
+  size::Val{T}
+  order::Val{O}
+  savedTimes::Vector{Vector{Float64}}
+  savedVars::Vector{Vector{Float64}}
+  #savedVarsQ::Vector{Vector{Float64}}
   algName::String
   sysName::String
-  numSteps ::MVector{T,Int}
   absQ::Float64
   totalSteps::Int
   simulStepCount::Int
-#=   ev::Vector{Array{Float64}}
-  et::Vector{Array{Float64}}
-  hv::Vector{Array{Float64}}
-  evs::Vector{Array{Float64}}
-  ets::Vector{Array{Float64}}
-  hvs::Vector{Array{Float64}} =#
+  evCount::Int
+  numSteps ::Vector{Int}
+  ft::Float64
+end
+struct HeavySol{T,O}<:Sol{T,O}
+  size::Val{T}
+  order::Val{O}
+  savedTimes::Vector{Vector{Float64}}
+  savedVars::Vector{Vector{Float64}}
+  savedDers::Vector{Vector{Float64}}
+  #savedVarsQ::Vector{Vector{Float64}}
+  algName::String
+  sysName::String
+  absQ::Float64
+  totalSteps::Int
+  simulStepCount::Int
+  evCount::Int
+  numSteps ::Vector{Int}
+  ft::Float64
 end
 
+
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
+ # println("light")
+  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+end
+
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},savedDers :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
+  # println("light")
+   sol=HeavySol(Val(T),Val(O),savedTimes, savedVars,savedDers,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+ end
 
 function getindex(s::Sol, i::Int64)
   if i==1
@@ -27,53 +52,67 @@ function getindex(s::Sol, i::Int64)
   end
 end
 
-####################################################################################################
-function evaluateSol(sol::Sol{T},index::Int,t::Float64)where {T}
-  (t>sol[1][end]) && error("given point is outside the sol range")
-  ord=sol.order
-  x=Taylor0(zeros(ord + 1), ord) 
-  integratorCache=Taylor0(zeros(ord+1),ord)
-  for i=2:length(sol[1])#savedTimes after the init time...init time is at index i=1
-      if sol[1][i]>t # i-1 is closest lower point
-        elapsed=t-sol[1][i-1]  
-        x.coeffs .=sol[2][index][i-1].coeffs
-        integrateState(Val(ord),x,integratorCache,elapsed)
+
+
+@inline function evaluateSol(sol::LightSol{T,O},index::Int,t::Float64)where {T,O}
+  (t>sol.ft) && error("given point is outside the sol range")
+
+  x=sol[2][index][end] 
+  #integratorCache=Taylor0(zeros(O+1),O)
+  for i=2:length(sol[1][index])#savedTimes after the init time...init time is at index i=1
+      if sol[1][index][i]>t # i-1 is closest lower point
+        f1=sol[2][index][i-1];f2=sol[2][index][i];t1=sol[1][index][i-1] ;t2=sol[1][index][i]# find x=f(t)=at+b...linear interpolation
+        a=(f2-f1)/(t2-t1)
+        b=(f1*t2-f2*t1)/(t2-t1)
+        x=a*t+b
+       # println("1st case")
         return x#taylor evaluation after small elapsed with the point before (i-1)
-      elseif sol[1][i]==t # i-1 is closest lower point
-        x.coeffs .=sol[2][index][i].coeffs
+      elseif sol[1][index][i]==t # i-1 is closest lower point
+        x=sol[2][index][i]
+      #  println("2nd case")
         return x
       end
   end
-  
+ # println("3rd case")
+  return x #if var never changed then return init cond or if t>lastSavedTime for this var then return last value
 end
-function solInterpolated(sol::Sol{T},step::Float64,ft::Float64)where {T}
-  (ft>sol[1][end]) && error("given point is outside the sol range")
-  numPoints=length(sol.savedTimes)
+
+function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
+  #(sol.ft>sol[1][end]) && error("given point is outside the sol range")
+  #numPoints=length(sol.savedTimes)
   interpTimes=Float64[]
+  allInterpTimes=Vector{Vector{Float64}}(undef, T)
   t=0.0  #later can change to init_time which could be diff than zero
   push!(interpTimes,t)
-  while t+step<ft
+  while t+step<sol.ft
     t=t+step
     push!(interpTimes,t) 
   end
-  push!(interpTimes,ft)
+  push!(interpTimes,sol.ft)
   numInterpPoints=length(interpTimes)
   #display(interpTimes)
-  interpValues=Vector{Array{Taylor0{Float64}}}(undef, T)
-  for index=1:T
-    interpValues[index]=[]
-    push!(interpValues[index],sol[2][index][1]) #1st element is the init cond (true value)
-  end
-  for i=2:numInterpPoints-1
-    for index=1:T
-      push!(interpValues[index],evaluateSol(sol,index,interpTimes[i]))
-    end
+  interpValues=nothing
+  if sol isa LightSol
+    interpValues=Vector{Vector{Float64}}(undef, T)
+  #= elseif sol isa HeavySol
+    interpValues=Vector{Array{Taylor0}}(undef, T) =#
   end
   for index=1:T
-    push!(interpValues[index],sol[2][index][numPoints]) #last pt @ft
+          interpValues[index]=[]
+          push!(interpValues[index],sol[2][index][1]) #1st element is the init cond (true value)
+         # end
+        for i=2:numInterpPoints-1
+          # for index=1:T
+          # 
+          push!(interpValues[index],evaluateSol(sol,index,interpTimes[i]))
+          #  end
+        end
+          # for index=1:T
+          push!(interpValues[index],sol[2][index][end]) #last pt @ft
+          allInterpTimes[index]=interpTimes
   end
   #(interpTimes,interpValues)
-  Sol(sol.order,interpTimes, interpValues,sol.algName,sol.sysName,sol.numSteps,sol.absQ,sol.totalSteps,sol.simulStepCount)
+  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps#= ,sol.stepsaftersimul =#,sol.simulStepCount,sol.evCount,sol.numSteps,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
 end
 
 function evaluateSimpleSol(sol::Sol,index::Int,t::Float64)

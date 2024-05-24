@@ -1,52 +1,47 @@
 
-function getError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
+function getError(sol::Sol{T,O},index::Int,f::Function)where{T,O}
+  index>T &&  error("the system contains only $T variables!")
+  numPoints=length(sol.savedTimes[index])
   sumTrueSqr=0.0
   sumDiffSqr=0.0
   relerror=0.0
-  if index<=numVars
-    for i = 1:numPoints #each point is a taylor
-      ts=f(sol.savedTimes[i])
-      sumDiffSqr+=(sol.savedVars[index][i].coeffs[1]-ts)*(sol.savedVars[index][i].coeffs[1]-ts)
-      sumTrueSqr+=ts*ts
-    end
-    relerror=sqrt(sumDiffSqr/sumTrueSqr)
-  else
-    error("the system contains only $numVars variables!")
+  for i = 1:numPoints-1 #each point is a taylor
+    ts=f(sol.savedTimes[index][i])
+    sumDiffSqr+=(sol.savedVars[index][i]-ts)*(sol.savedVars[index][i]-ts)
+    sumTrueSqr+=ts*ts
   end
+  relerror=sqrt(sumDiffSqr/sumTrueSqr)
   return relerror
 end
 
-function getErrorByRodas(solRodas::Vector{Any},solmliqss::Sol{T},index::Int)where{T}
-  numPoints=length(solmliqss.savedTimes)
-  @show numPoints
-  numVars=length(solmliqss.savedVars)
+function getErrorByRefs(solRef::Vector{Any},solmliqss::Sol{T,O},index::Int)where{T,O}
+  #numVars=length(solmliqss.savedVars)
+  index>T &&  error("the system contains only $T variables!")
+  numPoints=length(solmliqss.savedTimes[index])
   sumTrueSqr=0.0
   sumDiffSqr=0.0
   relerror=0.0
-  if index<=numVars
-    for i = 1:numPoints-1 #each point is a taylor
-      ts=solRodas[i][index]
-      sumDiffSqr+=(solmliqss.savedVars[index][i].coeffs[1]-ts)*(solmliqss.savedVars[index][i].coeffs[1]-ts)
-      sumTrueSqr+=ts*ts
-    end
-    relerror=sqrt(sumDiffSqr/sumTrueSqr)
-  else
-    error("the system contains only $numVars variables!")
+  for i = 1:numPoints-1 #-1 because savedtimes holds init cond at begining
+    ts=solRef[i][index]
+    sumDiffSqr+=(solmliqss.savedVars[index][i]-ts)*(solmliqss.savedVars[index][i]-ts)
+    sumTrueSqr+=ts*ts
   end
+  relerror=sqrt(sumDiffSqr/sumTrueSqr)
   return relerror
 end
-function getAllErrorsByRodas(solRodas::Vector{Any},solmliqss::Sol{T})where{T}
-  numPoints=length(solmliqss.savedTimes)
+
+
+function getAllErrorsByRefs(solRef::Vector{Any},solmliqss::Sol{T,O})where{T,O}
+  numPoints=length(solmliqss.savedTimes[1])
   allErrors=Array{Float64}(undef, T)
   for index=1:T
       sumTrueSqr=0.0
       sumDiffSqr=0.0
       relerror=0.0
       for i = 1:numPoints-1 #each point is a taylor
-          ts=solRodas[i][index]
-          sumDiffSqr+=(solmliqss.savedVars[index][i].coeffs[1]-ts)*(solmliqss.savedVars[index][i].coeffs[1]-ts)
+          ts=solRef[i][index]
+          Ns=getX_fromSavedVars(solmliqss.savedVars,index,i)
+          sumDiffSqr+=(Ns-ts)*(Ns-ts)
           sumTrueSqr+=ts*ts
       end
       relerror=sqrt(sumDiffSqr/sumTrueSqr)
@@ -55,19 +50,31 @@ function getAllErrorsByRodas(solRodas::Vector{Any},solmliqss::Sol{T})where{T}
   end
   return allErrors
 end
-function getAverageErrorByRodas(solRodas::Vector{Any},solmliqss::Sol{T})where{T}
-  numPoints=length(solmliqss.savedTimes)
+@inline function getX_fromSavedVars(savedVars :: Vector{Array{Taylor0}},index::Int,i::Int)
+  return savedVars[index][i].coeffs[1]
+end
+@inline function getX_fromSavedVars(savedVars :: Vector{Vector{Float64}},index::Int,i::Int)
+  return savedVars[index][i]
+end
+
+function getAverageErrorByRefs(solRef::Vector{Any},solmliqss::Sol{T,O})where{T,O}
+  numPoints=length(solmliqss.savedTimes[1])
   allErrors=0.0
   for index=1:T
       sumTrueSqr=0.0
       sumDiffSqr=0.0
       relerror=0.0
       for i = 1:numPoints-1 #each point is a taylor
-          ts=solRodas[i][index]
-          sumDiffSqr+=(solmliqss.savedVars[index][i].coeffs[1]-ts)*(solmliqss.savedVars[index][i].coeffs[1]-ts)
+          ts=solRef[i][index]
+          Ns=getX_fromSavedVars(solmliqss.savedVars,index,i)
+          sumDiffSqr+=(Ns-ts)*(Ns-ts)
           sumTrueSqr+=ts*ts
       end
+      if  abs(sumTrueSqr)>1e-12
       relerror=sqrt(sumDiffSqr/sumTrueSqr)
+      else
+        relerror=0.0
+      end
       
       allErrors+= relerror
   end
@@ -77,29 +84,6 @@ end
 
 
 
-function getIntervalError(sol::Sol,index::Int,f::Function,t0::Float64,tf::Float64)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
-  sumTrueSqr=0.0
-  sumDiffSqr=0.0
-  relerror=0.0
-  if index<=numVars
-    for i = 1:numPoints #each point is a taylor
-      t=sol.savedTimes[i]
-      if t0<=t<=tf
-        ft=f(t)
-        sumDiffSqr+=(sol.savedVars[index][i].coeffs[1]-ft)*(sol.savedVars[index][i].coeffs[1]-ft)
-        sumTrueSqr+=ft*ft
-      end
-    end
-    if sumTrueSqr!=0.0
-       relerror=sqrt(sumDiffSqr/sumTrueSqr)
-    end
-  else
-    error("the system contains only $numVars variables!")
-  end
-  return relerror
-end
 function plotRelativeError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
@@ -120,78 +104,9 @@ function plotRelativeError(sol::Sol,index::Int,f::Function)
     error("the system contains only $numVars variables!")
   end
 end
-function stackplotRelativeError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
-  if index<=numVars
-    temp = []
-    tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      if ft>1e-12 || ft < -1e-12
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)/ft))
-        push!(tempt,sol.savedTimes[i])
-      end
-    end
-    display(plot!(tempt, temp,title="RelError:(S-T)/T for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#) )
-    println("press enter to exit")
-    readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
-function plot_save_RelativeError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-    tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      if ft>1e-12 || ft < -1e-12
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)/ft))
-        push!(tempt,sol.savedTimes[i])
-      end
-    end
-  # display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
-  p1=plot(tempt, temp,title="RelError:(S-T)/T for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#) 
-  savefig(p1, "relError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-  display(p1)
- println("press enter to exit")
- readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
-function stackplot_save_RelativeError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-    tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      if ft>1e-12 || ft < -1e-12
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)/ft))
-        push!(tempt,sol.savedTimes[i])
-      end
-    end
-  # display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
-  p1=plot(tempt, temp,title="RelError:(S-T)/T for  x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#) 
-  savefig(p1, "relError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-  display(p1)
- println("press enter to exit")
- readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
+
 function saveRelativeError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
@@ -215,29 +130,7 @@ function saveRelativeError(sol::Sol,index::Int,f::Function)
     error("the system contains only $numVars variables!")
   end
 end
-function stacksaveRelativeError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-    tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      if ft>1e-12 || ft < -1e-12
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)/ft))
-        push!(tempt,sol.savedTimes[i])
-      end
-    end
-  # display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
-  p1=plot!(tempt, temp,title="RelError:(S-T)/T for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#) 
-  savefig(p1, "relError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
 function plotAbsoluteError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
@@ -261,81 +154,8 @@ function plotAbsoluteError(sol::Sol,index::Int,f::Function)
   end
 end
 
-function stackplotAbsoluteError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
-  if index<=numVars
-    temp = []
-   # tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      #if ft>1e-2 || ft < -1e-2
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
-       # push!(tempt,sol.savedTimes[i])
-     # end
-    end
-   #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
-   display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#))
-  
-    println("press enter to exit")
-    readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
 
-function plotsaveAbsoluteError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-   # tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      #if ft>1e-2 || ft < -1e-2
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
-       # push!(tempt,sol.savedTimes[i])
-     # end
-    end
-   #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
-   p1=plot(sol.savedTimes, temp,title="AbsError:(S-T) for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#)
-   savefig(p1, "absError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-     display(p1)
-    println("press enter to exit")
-    readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
-function stackplotsaveAbsoluteError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
-  p1=nothing
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-   # tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      #if ft>1e-2 || ft < -1e-2
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
-       # push!(tempt,sol.savedTimes[i])
-     # end
-    end
-   #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
-   p1=plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#)
-   savefig(p1, "absError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(timestamp).png")
-     display(p1)
-    println("press enter to exit")
-    readline() 
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
 function saveAbsoluteError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
@@ -360,54 +180,7 @@ function saveAbsoluteError(sol::Sol,index::Int,f::Function)
     error("the system contains only $numVars variables!")
   end
 end
-function saveZoomedAbsoluteError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
- 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-   # tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      #if ft>1e-2 || ft < -1e-2
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
-       # push!(tempt,sol.savedTimes[i])
-     # end
-    end
-   #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
-   p1=plot(sol.savedTimes, temp,title="AbsError:(S-T) for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200)=#,ylims=(0.0,5e-6) )
-   savefig(p1, "absError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-     
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
-function stacksaveAbsoluteError(sol::Sol,index::Int,f::Function)
-  numPoints=length(sol.savedTimes)
-  numVars=length(sol.savedVars)
 
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if index<=numVars
-    temp = []
-   # tempt = []
-    for i = 1:numPoints #each point is a taylor
-      ft=f(sol.savedTimes[i])
-      #if ft>1e-2 || ft < -1e-2
-        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
-       # push!(tempt,sol.savedTimes[i])
-     # end
-    end
-   #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
-   p1=plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$(index)_$(sol.absQ)",label="$(sol.algName)"#= ,xlims=(80,200),ylims=(0.0,0.0002) =#)
-   savefig(p1, "absError_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_x$(index)_$(timestamp).png")
-    
-  else
-    error("the system contains only $numVars variables!")
-  end
-end
 function plotCumulativeSquaredRelativeError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
