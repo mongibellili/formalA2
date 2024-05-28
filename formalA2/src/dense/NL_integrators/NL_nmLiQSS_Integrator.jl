@@ -78,7 +78,7 @@ end
     #Liqss_reComputeNextTime(Val(O), i, initTime, nextStateTime, x, q, quantum)
   #  t[0]=0.1;clearCache(taylorOpsCache,Val(CS),Val(O));f(i,q,t,taylorOpsCache);# to detect if rhs contains time components
     #@show taylorOpsCache
-    #computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)#not complete, currently elapsed=0.1 is temp until fixed
+    #computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)#not complete, currently elapsed=0.1 is rejectedSteps until fixed
    #prevStepVal[i]=x[i][0]#assignXPrevStepVals(Val(O),prevStepVal,x,i)
  # end
 
@@ -90,7 +90,8 @@ end
   ###################################################################################################################################################################
   #################################################################################################################################################################### 
   simt = initTime ;simulStepCount=0;totalSteps=0;inputSteps=0
-
+rejectedSteps=  Vector{Int}(undef, 1)
+rejectedSteps[1]=0
   #simul=false
 printonce=0
 
@@ -113,9 +114,13 @@ printonce=0
     ##########################################state########################################
     if sch[3] == :ST_STATE
         xitemp=x[index][0]
+        if xitemp>1e6 
+          simt=ft+1.0
+          break
+        end
         elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
-        if abs(x[index].coeffs[2])>1e6 quantum[index]=10*quantum[index] end  # i added this for the case a function is climbing (up/down) fast     
+       # if abs(x[index].coeffs[2])>1e6 quantum[index]=10*quantum[index] end  # i added this for the case a function is climbing (up/down) fast     
         #dirI=x[index][0]-savedVars[index][end]  
         dirI=x[index][0]-xitemp
         for b in (jac(index)  )    # update Qb : to be used to calculate exacte Aindexb...move below updateQ
@@ -141,7 +146,7 @@ printonce=0
           if j!=index && aij*aji!=0.0
           
              
-              if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
+              if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
              
@@ -260,7 +265,7 @@ printonce=0
   end =#
   end#end while
 
- createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
+ createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,#= rejectedSteps[1] =#simulStepCount,0,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end

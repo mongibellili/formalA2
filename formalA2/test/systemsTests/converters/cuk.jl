@@ -1,5 +1,5 @@
-using qss
-using BenchmarkTools
+using formalA2
+#using BenchmarkTools
 
 
 function test()
@@ -32,7 +32,10 @@ function test()
     end  
   end
   tspan=(0.0,0.001)
-  sol= solve(odeprob,nmliqss2(),abstol=1e-4,reltol=1e-3,tspan)
-  save_Sol(sol,note="selectivecancel")
+ #=  sol= solve(odeprob,nmliqss2(),abstol=1e-4,reltol=1e-3,tspan)
+  save_Sol(sol) =#
+  sol= solve(odeprob,nmliqss1(),abstol=1e-4,reltol=1e-3,tspan)
+ # save_Sol(sol)
+ @show sol.simulStepCount
 end
 test()

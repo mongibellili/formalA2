@@ -134,7 +134,11 @@ t0=1.0
     end
    # @show odeprob
     tspan = (0.0, 4.0e-3)
-    sol= solve(odeprob,nmliqss1(),tspan,abstol=1e-3,reltol=1e-2)    
+    slvr=nmliqss1()
+    sol=@belapsed solve($odeprob,$slvr,$tspan,abstol=1e-3,reltol=1e-2)    
+    @show sol
+   # save_Sol(sol)
+   # @show sol.simulStepCount
    #=  
    save_Sol(sol,1)
    save_Sol(sol,2)
@@ -152,8 +156,8 @@ t0=1.0
  # save_Sol(sol,9,note="z1",xlims=(0.0,0.2e-8),ylims=(-0.005,0.005)) 
    save_SolSum(sol,3,6,9,12,interp=0.00001) #add interpl preference =#
    
-  save_Sol(sol,13) 
-  save_Sol(sol,14) 
+#  save_Sol(sol,13) 
+ # save_Sol(sol,14) 
    
 end
 #@btime 

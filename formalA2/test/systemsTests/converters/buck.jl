@@ -1,4 +1,4 @@
-using QuantizedSystemSolver
+using formalA2
 function test()
     odeprob = @NLodeProblem begin
           name=(buck,)
@@ -22,7 +22,8 @@ function test()
           end     
     end
     tspan = (0.0, 0.001)
-    sol= solve(odeprob,nmliqss1(),tspan,abstol=1e-4,reltol=1e-3)    
+    sol= solve(odeprob,nmliqss2(),tspan,abstol=1e-4,reltol=1e-3)    
     save_Sol(sol)
+    @show sol.simulStepCount
 end
 test()

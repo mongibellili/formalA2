@@ -180,7 +180,7 @@ end
   if Δ!=0.0
     qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xj+h*uji))/Δ
     qj = ((1-h*aii)*(xj+h*uji)+h*aji*(xi+h*uij))/Δ
-    return -(((xi-qi)/quani)^2+((xj-qj)/quanj)^2)
+    return -((abs(xi-qi)/quani)+(abs(xj-qj)/quanj))
   else
     println("phi returns 0")
     return 0.0
@@ -225,12 +225,18 @@ end
   return (a1+b1)/2
  end
 
- function nmisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vector{Float64},acceptedi::Vector{Vector{Float64}},acceptedj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
- 
+ function nmisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vector{Float64},acceptedi::Vector{Vector{Float64}},acceptedj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64,temp)
   cacheA[1]=0.0;exacteA(q,d,cacheA,index,index,simt)
   aii=cacheA[1]
   cacheA[1]=0.0;exacteA(q,d,cacheA,j,j,simt)
   ajj=cacheA[1]
+  α=-aii-ajj
+    β=aii*ajj-aij*aji
+    if α<0 || β<0
+      temp[1]+=1
+      return false
+    end
+
    xi=x[index][0];xj=x[j][0];ẋi=x[index][1];ẋj=x[j][1]
   qi=q[index][0];qj=q[j][0]
   quanj=quantum[j];quani=quantum[index]
@@ -254,6 +260,13 @@ end
 
     dxi=aii*qi+aij*qjplus+uij #both future qi & qj   #emulate fi
   
+########old condition:Union 
+     #= if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
+    if abs(dxi)>3*abs(ẋi) || abs(dxi)*3<abs(ẋi) ||  (dxi*ẋi)<0.0 
+        iscycle=true
+    end
+  end   =#
+
     ########condition:Union i union
     if (abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0)
       cancelCriteria=1e-6*quani
@@ -280,9 +293,18 @@ end
     end   
    
 
- 
+   # iscycle=false
   if iscycle
+  #=   α=-aii-ajj
+    β=aii*ajj-aij*aji
+    if α<0 
+      @show aii,ajj
+    end
+      if β<0
+        @show aii,ajj,aij,aji
+      end =#
     #clear accIntrvals and cache of roots
+   # @show simt
     for i =1:3# 3 ord1 ,7 ord2
       acceptedi[i][1]=0.0; acceptedi[i][2]=0.0
       acceptedj[i][1]=0.0; acceptedj[i][2]=0.0
@@ -319,12 +341,12 @@ end
         @show αj,βj,quanj,cj,bj,resj1,resj2,resj3,resj4
         printTime=simt
       end
-      if  βj<0 
+     #=  if  βj<0 
         @show βi
         @show αi,quani,ci,bi,resi1,resi2,resi3,resi4
         @show αj,quanj,cj,bj,resj1,resj2,resj3,resj4
         printTime=simt
-      end
+      end =#
       #= if hasThreePos(resi1,resi2,resi3,resi4)
         println("3 roots i")
         printTime=simt

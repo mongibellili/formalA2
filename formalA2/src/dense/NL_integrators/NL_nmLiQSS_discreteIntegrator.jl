@@ -85,7 +85,7 @@ end
    clearCache(taylorOpsCache,Val(CS),Val(O));f(i,-1,-1,q,d,t,taylorOpsCache);
    computeDerivative(Val(O), x[i], taylorOpsCache[1])#0.0 used to be elapsed...even down below not neeeded anymore
   Liqss_reComputeNextTime(Val(O), i, initTime, nextStateTime, x, q, quantum)
-  computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)#not complete, currently elapsed=0.1 is temp until fixed
+  computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)#not complete, currently elapsed=0.1 is rejectedSteps until fixed
  #prevStepVal[i]=x[i][0]#assignXPrevStepVals(Val(O),prevStepVal,x,i)
 end =#
   
@@ -109,6 +109,8 @@ end
 ####################################################################################################################################################################
 simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0; countEvents=0;inputstep=0;statestep=0;simulStepCount=0
 ft<savetime && error("ft<savetime")
+rejectedSteps=  Vector{Int}(undef, 1)
+rejectedSteps[1]=0
 while simt< ft && totalSteps < 50000000
   
   sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
@@ -133,11 +135,11 @@ while simt< ft && totalSteps < 50000000
     
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt ; 
     dirI=x[index][0]-xitemp
-    if abs(dirI)>3*quantum[index] x[index][0]= 2*quantum[index] *sign(dirI) end # this is a rare case where dxi gets changed a lot by an event
+    #if abs(dirI)>3*quantum[index] x[index][0]= 2*quantum[index] *sign(dirI) end # this is a rare case where dxi gets changed a lot by an event
    
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
    
-    if abs(x[index].coeffs[2])>1e9 quantum[index]=10*quantum[index] end  # i added this for the case a function is climbing (up/down) fast     
+    #if abs(x[index].coeffs[2])>1e9 quantum[index]=10*quantum[index] end  # i added this for the case a function is climbing (up/down) fast     
 
     
    
@@ -172,7 +174,7 @@ while simt< ft && totalSteps < 50000000
             cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
           end  =#
          # @show aij,aji
-          if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
+          if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps)
             simulStepCount+=1
 
 
@@ -500,5 +502,5 @@ end#end while
 #@show savedVars
 #createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(nameof(f)),absQ,totalSteps,0)#0 I track simulSteps 
 #createSol(Val(T),Val(O),savedTimes,savedVars, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
-createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,rejectedSteps[1]#= simulStepCount =#,countEvents,numSteps,ft)
 end#end integrate
