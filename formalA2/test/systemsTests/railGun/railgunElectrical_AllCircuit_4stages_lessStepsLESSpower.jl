@@ -1,24 +1,25 @@
 using formalA2
-using BenchmarkTools
-function test()
+#using BenchmarkTools
+function test(slvr)
  
     odeprob = @NLodeProblem begin
           name=(RGElectrical4,)
-         ROn = 1e-5;ROff = 1e5;
-          Lpr = 4.2*1e-9#0.48*1e-6#0.45 * 1e-6
-L1 = 0.6*1e-4 #28.0*1e-6#0.6*1e-6
+          ROn = 1e-5;ROff = 1e1;
+      # Lpr = 4.2e-9#0.48*1e-6#0.45 * 1e-6
+L1 = 0.6e-4 #28.0*1e-6#0.6*1e-6
 #L2 = 4.0e-6;L3 = 1.1*1e-6
-L23=5.1e-6
+#L23=5.1e-6
 
- R1= 4.0e-3; R2 = 0.28*1e-3;R3 = 3.6*1e-3
+R1= 4.0e-3; #R2 = 0.28e-3;R3 = 3.6e-3
 
-C = 3.08*1e-3#3.08*1e-3
+C = 3.08e-3#3.08*1e-3
 
 m=0.12
-γ = 50.0*1e6; w = 15.0*1e-3#25.0*1e-3#15.0*1e-3 
-μ = 4.0*3.14*1e-7
-Rpr0 = 15.5*1e-6
-FNmec = 680.0; α = 0.154
+#= γ = 50.0e6; w = 7.5#25.0*1e-3#15.0*1e-3 
+μ = 4.0*3.14*1e-7 =#
+#rr=manualIntg*sqrt(μ/(3.14*γ))/w=manualIntg*coef =manualIntg* 1.1925695879998878e-8
+Rpr0 = 1.5e-6
+FNmec = 680.0; #α = 0.154
 rs11=1e-5;rs21=1e-5;rs31=1e-5;rs41=1e-5;
 t0=1.0
 
@@ -32,7 +33,8 @@ t0=1.0
           is1=u[1] ;uc1=u[2]; il1=u[3] ;is2=u[4] ;uc2=u[5]; il2=u[6] ;is3=u[7] ;uc3=u[8]; il3=u[9] ;is4=u[10] ;uc4=u[11]; il4=u[12] ;x=u[13]; v=u[14] 
           #α=LR+Lpr;
          # RR=4.0e-5
-        rr=manualIntg*2.0*sqrt(μ/(3.14*γ))/w
+       # rr=manualIntg*2.0*sqrt(μ/(3.14*γ))/w
+        rr=manualIntg*1.1925695879998878e-8
          rpr=Rpr0*(sqrt(t0/(t+1e-4))+(t/t0)^16)/(1.0+(t/t0)^16)
 
          rrpp=(rpr + rr + 4.53e-7v) 
@@ -133,10 +135,12 @@ t0=1.0
           
     end
    # @show odeprob
-    tspan = (0.0, 4.0e-3)
-    slvr=nmliqss1()
-    sol=@belapsed solve($odeprob,$slvr,$tspan,abstol=1e-3,reltol=1e-2)    
-    @show sol
+    tspan = (0.0, 6.0e-3)
+    solnmliqss=solve(odeprob,slvr,tspan,abstol=1e-5,reltol=1e-3)   
+    timenmliqss=0.0 
+    #timenmliqss=@belapsed solve($odeprob,$slvr,$tspan,abstol=1e-5,reltol=1e-3)    
+    @show solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss
+     
    # save_Sol(sol)
    # @show sol.simulStepCount
    #=  
@@ -156,9 +160,19 @@ t0=1.0
  # save_Sol(sol,9,note="z1",xlims=(0.0,0.2e-8),ylims=(-0.005,0.005)) 
    save_SolSum(sol,3,6,9,12,interp=0.00001) #add interpl preference =#
    
-#  save_Sol(sol,13) 
- # save_Sol(sol,14) 
+  save_Sol(solnmliqss,13) 
+  save_Sol(solnmliqss,14) 
    
 end
 #@btime 
-test()
+
+#= println("compareBounds")
+test(nmliqss1())  #compareBounds
+println("golden search")
+test(mliqss1())   #goldenSearch
+
+#test(case,mliqssBounds1())
+println("iterations")
+test(nliqss1())  #iterations =#
+
+test(nmliqss2()) 

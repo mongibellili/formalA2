@@ -93,7 +93,14 @@ function integrate(Al::QSSAlgorithm{:mliqss,O},CommonqssData::CommonQSS_data{0},
 
   #simul=false
   printonce=0
-
+  rejectedSteps=  Vector{Int}(undef, 1)
+  rejectedSteps[1]=0
+  simpleCase=  Vector{Int}(undef, 1)
+  simpleCase[1]=0
+  temp2=  Vector{Int}(undef, 1)
+  temp2[1]=0
+  temp3=  Vector{Int}(undef, 1)
+  temp3[1]=0
   while simt < ft && totalSteps < 30000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
@@ -141,7 +148,7 @@ function integrate(Al::QSSAlgorithm{:mliqss,O},CommonqssData::CommonQSS_data{0},
           if j!=index && aij*aji!=0.0
           
              
-              if misCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
+              if misCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps,simpleCase,temp2,temp3)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
              
@@ -260,7 +267,9 @@ function integrate(Al::QSSAlgorithm{:mliqss,O},CommonqssData::CommonQSS_data{0},
   end =#
   end#end while
 
- createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqssOptim$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
+#=  @show simpleCase,temp2,temp3
+ @show rejectedSteps[1] =#
+  createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqssOptim$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end
@@ -268,7 +277,7 @@ end
 
 
 
-function integrate(Al::QSSAlgorithm{:mliqssBounds,O},CommonqssData::CommonQSS_data{0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,CS,O,T}
+#= function integrate(Al::QSSAlgorithm{:mliqssBounds,O},CommonqssData::CommonQSS_data{0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,CS,O,T}
   cacheA=specialLiqssData.cacheA
   #direction=specialLiqssData.direction
   #qminus= specialLiqssData.qminus
@@ -410,7 +419,7 @@ function integrate(Al::QSSAlgorithm{:mliqssBounds,O},CommonqssData::CommonQSS_da
           if j!=index && aij*aji!=0.0
           
              
-              if isCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
+              if isCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
              
@@ -533,3 +542,4 @@ function integrate(Al::QSSAlgorithm{:mliqssBounds,O},CommonqssData::CommonQSS_da
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end
+ =#

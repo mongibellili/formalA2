@@ -94,7 +94,12 @@ rejectedSteps=  Vector{Int}(undef, 1)
 rejectedSteps[1]=0
   #simul=false
 printonce=0
-
+simpleCase=  Vector{Int}(undef, 1)
+simpleCase[1]=0
+temp2=  Vector{Int}(undef, 1)
+temp2[1]=0
+temp3=  Vector{Int}(undef, 1)
+temp3[1]=0
   while simt < ft && totalSteps < 10000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
@@ -146,7 +151,7 @@ printonce=0
           if j!=index && aij*aji!=0.0
           
              
-              if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps)
+              if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps,simpleCase,temp2,temp3)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
              
@@ -264,8 +269,9 @@ printonce=0
 
   end =#
   end#end while
-
- createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,#= rejectedSteps[1] =#simulStepCount,0,numSteps,ft)
+#=   @show simpleCase,temp2,temp3
+@show rejectedSteps[1] =#
+ createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end

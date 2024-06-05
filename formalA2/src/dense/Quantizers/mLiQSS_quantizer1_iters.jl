@@ -4,7 +4,7 @@
 
 
 #iters
-function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vector{Float64},acceptedi::Vector{Vector{Float64}},acceptedj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exactA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
+function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vector{Float64},acceptedi::Vector{Vector{Float64}},acceptedj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exactA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64,rejected)
  
   cacheA[1]=0.0;exactA(q,d,cacheA,index,index,simt)
   aii=cacheA[1]
@@ -14,7 +14,12 @@ function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vect
   aij=cacheA[1]
   exactA(q,cacheA,j,index)
   aji=cacheA[1] =#
-
+  α=-aii-ajj
+  β=aii*ajj-aij*aji
+  if α<0 || β<0
+   #=  rejected[1]+=1
+    return false =#
+  end
 
   xi=x[index][0];xj=x[j][0];ẋi=x[index][1];ẋj=x[j][1]
   qi=q[index][0];qj=q[j][0]
@@ -48,11 +53,11 @@ function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vect
     end =#
                              
    ########condition:Union 
- #= if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
+#=  if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
     if abs(dxi)>3*abs(ẋi) || abs(dxi)*3<abs(ẋi) ||  (dxi*ẋi)<0.0 
         iscycle=true
     end
-  end   =#                           
+  end    =#                          
     ########condition:Union i
   #=   if abs(dxj-ẋj)>(abs(dxj+ẋj)/2)  
       if abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) 
@@ -101,7 +106,7 @@ function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vect
      Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
      qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xj+h*uji))/Δ
      qj = ((1-h*aii)*(xj+h*uji)+h*aji*(xi+h*uij))/Δ
-   if (abs(qi - xi) > 1*quani || abs(qj - xj) > 1*quanj) #checking qi-xi is not needed since firstguess just made it less than delta
+   if (abs(qi - xi) > 2*quani || abs(qj - xj) > 2*quanj) #checking qi-xi is not needed since firstguess just made it less than delta
      h1 = (abs(quani / ẋi));h2 = (abs(quanj / ẋj));
      h=min(h1,h2)
      h_two=h
@@ -113,12 +118,12 @@ function nisCycle_and_simulUpdate(cacheRootsi::Vector{Float64},cacheRootsj::Vect
      qj = ((1-h*aii)*(xj+h*uji)+h*aji*(xi+h*uij))/Δ
    end
    maxIter=1000
-   while (abs(qi - xi) > 1*quani || abs(qj - xj) > 1*quanj) && (maxIter>0)
+   while (abs(qi - xi) > 2*quani || abs(qj - xj) > 2*quanj) && (maxIter>0)
        maxIter-=1
-       h1 = h * (0.99*quani / abs(qi - xi));
+       h1 = h * 2*(0.99*quani / abs(qi - xi));
       #=  Δtemp=(1-h1*aii)*(1-h1*ajj)-h1*h1*aij*aji
        qitemp = ((1-h1*ajj)*(xi+h1*uij)+h1*aij*(xj+h1*uji))/Δtemp =#
-       h2 = h * (0.99*quanj / abs(qj - xj));
+       h2 = h * 2*(0.99*quanj / abs(qj - xj));
        #= Δtemp=(1-h2*aii)*(1-h2*ajj)-h2*h2*aij*aji
        qjtemp = ((1-h2*ajj)*(xi+h2*uij)+h2*aij*(xj+h2*uji))/Δtemp
        if abs(qitemp - xi) > 1*quani || abs(qjtemp - xj) > 1*quanj

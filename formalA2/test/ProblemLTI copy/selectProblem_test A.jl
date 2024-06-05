@@ -23,7 +23,17 @@ function A2_839()
   x2(t)=-1.0481691867790153*exp(-22.89646517692415*t)+0.0005501391599678998*exp(1.1464651769241527*t)+-0.9523809523809524
   return (odeprob,x1,x2) 
   end 
-
+  function A1_2821() 
+    odeprob = @NLodeProblem begin
+                   name=(A1_2821,)
+                   u = [-1.0, -2.0]
+                   du[1] = -12.37*u[1]+-0.75*u[2]+1.0
+                   du[2] =12.64*u[1]+0.75*u[2]+1.0
+               end  
+    x1(t)=1.3232924566769952*-0.9772584600872273*exp(-11.602546935502552*t)+-126.82946529618272*-0.060716223457076626*exp(-0.017453064497448545*t)+-7.40740740740738
+    x2(t)=1.3232924566769952*exp(-11.602546935502552*t)+-126.82946529618272*exp(-0.017453064497448545*t)+123.50617283950572
+    return (odeprob,x1,x2) 
+    end 
 
 function solveProblem(prblem::Function,ft::Float64,solver::formalA2.QSSAlgorithm{solType, V},absTol,relTol)where {V,solType} 
     pr=prblem()
@@ -43,7 +53,7 @@ function solveProblem(prblem::Function,ft::Float64,solver::formalA2.QSSAlgorithm
      @show (er1+er2)/2
     # timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
     resnmliqss= ("$(solnmliqss2.sysName)",solnmliqss2.totalSteps,solnmliqss2.simulStepCount)
-   # @show resnmliqss
+    @show resnmliqss
 end
 
 
@@ -83,12 +93,12 @@ mainTestA1(nmliqss1())#normal analytic
 function mainTestA2(solver::formalA2.QSSAlgorithm{solType, V})where {V,solType} 
   absTol=1e-6
   relTol=1e-3
-  ft=2.5  
+  ft=500.0  
   cResults=[]
   #for fun in funs
   total=12540
-  for k=839:839
-    fn=Symbol("A2_$k")
+  for k=2821:2821
+    fn=Symbol("A1_$k")
     fun=getfield(Main, fn)
   #  @show fun
  #=  if 500<k<502 @show k end

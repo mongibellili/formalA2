@@ -1,5 +1,5 @@
 #using TimerOutputs
-function integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_data{Z},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,Z,D,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,O,T,Z,D,CS}
+function integrate(Al::QSSAlgorithm{:mliqss,O},CommonqssData::CommonQSS_data{Z},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,Z,D,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,O,T,Z,D,CS}
   cacheA=specialLiqssData.cacheA
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
 
@@ -180,7 +180,7 @@ while simt< ft && totalSteps < 50000000
             cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
           end  =#
          # @show aij,aji
-          if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps,simpleCase,temp2,temp3)
+          if misCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps,simpleCase,temp2,temp3)
             simulStepCount+=1
 
 
@@ -281,46 +281,7 @@ while simt< ft && totalSteps < 50000000
     ##################################input########################################
   elseif stepType == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
      inputstep+=1
-    #=   if VERBOSE println("nmliqss discreteintgrator under input, index= $index, totalsteps= $totalSteps")  end
-    elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
-    quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
-    for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt 
-      for b in jac(index) 
-        elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
-      end
-    clearCache(taylorOpsCache,Val(CS),Val(O));f(index,-1,-1,q,d,t,taylorOpsCache)
-    computeNextInputTime(Val(O), index, simt, elapsed,taylorOpsCache[1] , nextInputTime, x,  quantum)
-    computeDerivative(Val(O), x[index], taylorOpsCache[1])
 
-    for j in(SD(index))  
-      elapsedx = simt - tx[j];
-      if elapsedx > 0 
-        x[j].coeffs[1] = x[j](elapsedx);tx[j] = simt 
-       # quantum[j] = relQ * abs(x[j].coeffs[1]) ;quantum[j]=quantum[j] < absQ ? absQ : quantum[j];quantum[j]=quantum[j] > maxErr ? maxErr : quantum[j]   
-      end
-      elapsedq = simt - tq[j];if elapsedq > 0 integrateState(Val(O-1),q[j],elapsedq);tq[j] = simt  end#q needs to be updated here for recomputeNext                 
-      # elapsed update all other vars that this derj depends upon.
-        for b in jac(j) 
-          elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
-        end
-      
-        clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
-        reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
-    end#end for
-    for j in (SZ[index])
-      
-        for b in zc_SimpleJac[j] # elapsed update all other vars that this derj depends upon.
-             
-            elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
-           # elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
-       
-        end              
-       #=  clearCache(taylorOpsCache,Val(CS),Val(O))#normally and later i should update x,q (integrate q=q+e derQ  for higher orders)
-        computeNextEventTime(Val(O),j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum)#,maxIterer)  =#
-        clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,x,d,t,taylorOpsCache)        
-         computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
-     
-    end =#
   #################################################################event########################################
   
 else
@@ -503,11 +464,12 @@ else
     prevStepTime=simt
 # end
 end#end while
- #=  @show simpleCase,temp2,temp3
- @show rejectedSteps[1] =#
+ 
 #@show countEvents,inputstep,statestep,simulStepCount
 #@show savedVars
 #createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(nameof(f)),absQ,totalSteps,0)#0 I track simulSteps 
 #createSol(Val(T),Val(O),savedTimes,savedVars, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
-createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,#= rejectedSteps[1] =#simulStepCount,countEvents,numSteps,ft)
+#= @show simpleCase,temp2,temp3
+@show rejectedSteps[1] =#
+createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
 end#end integrate

@@ -7,7 +7,7 @@ using BSON
 #using Plots
 function test(case,solvr)
   absTol=1e-5
-     relTol=1e-2
+     relTol=1e-3
    
 
     
@@ -25,7 +25,7 @@ function test(case,solvr)
      end   
      println("start tyson solving")
      timenmliqss=0.0
-     tspan=(0.0,25.0)
+     tspan=(0.0,50.0)
      solnmliqss=solve(odeprob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan#= ,maxErr=100*relTol =#)
      # save_Sol(solnmliqss)
     # @show solnmliqss.totalSteps
@@ -37,10 +37,16 @@ function test(case,solvr)
      err3=0.0
     err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp) 
 
-   timenmliqss=@belapsed solve($odeprob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,$tspan#= ,maxErr=1000*$relTol =#)
+  timenmliqss=@belapsed solve($odeprob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,$tspan#= ,maxErr=1000*$relTol =#)
     resnmliqss11E_2= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
     @show resnmliqss11E_2 
 
 end
 case="order1_"
-test(case,nmliqss1())
+println("golden search")
+test(case,mliqss1())   #goldenSearch
+println("compareBounds")
+test(case,nmliqss1())  #compareBounds
+#test(case,mliqssBounds1())
+println("iterations")
+test(case,nliqss1())  #iterations

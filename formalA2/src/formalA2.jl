@@ -121,7 +121,8 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("dense/NL_integrators/NL_nmLiQSS_Integrator.jl")
     include("dense/NL_integrators/NL_nmLiQSS_discreteIntegrator.jl")
    
-
+    include("dense/NL_integrators/NL_mLiQSS_discreteIntegrator.jl")
+    include("dense/NL_integrators/NL_nLiQSS_discreteIntegrator.jl")
    #implicit intgrators used to show improvement of modifications
     include("dense/NL_integrators/NL_mLiQSS_Integrator.jl")
   include("dense/NL_integrators/NL_nLiQSS_Integrator.jl")

@@ -1,5 +1,5 @@
 #using TimerOutputs
-function integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_data{Z},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,Z,D,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,O,T,Z,D,CS}
+function integrate(Al::QSSAlgorithm{:nliqss,O},CommonqssData::CommonQSS_data{Z},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,Z,D,CS},f::Function,jac::Function,SD::Function,exactA::Function) where {PRTYPE,O,T,Z,D,CS}
   cacheA=specialLiqssData.cacheA
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
 
@@ -111,12 +111,7 @@ simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0; countEvents
 ft<savetime && error("ft<savetime")
 rejectedSteps=  Vector{Int}(undef, 1)
 rejectedSteps[1]=0
-simpleCase=  Vector{Int}(undef, 1)
-simpleCase[1]=0
-temp2=  Vector{Int}(undef, 1)
-temp2[1]=0
-temp3=  Vector{Int}(undef, 1)
-temp3[1]=0
+
 while simt< ft && totalSteps < 50000000
   
   sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
@@ -180,7 +175,7 @@ while simt< ft && totalSteps < 50000000
             cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
           end  =#
          # @show aij,aji
-          if nmisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps,simpleCase,temp2,temp3)
+          if nisCycle_and_simulUpdate(cacheRootsi,cacheRootsj,acceptedi,acceptedj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exactA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,rejectedSteps)
             simulStepCount+=1
 
 
@@ -503,11 +498,10 @@ else
     prevStepTime=simt
 # end
 end#end while
- #=  @show simpleCase,temp2,temp3
- @show rejectedSteps[1] =#
+ 
 #@show countEvents,inputstep,statestep,simulStepCount
 #@show savedVars
 #createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(nameof(f)),absQ,totalSteps,0)#0 I track simulSteps 
 #createSol(Val(T),Val(O),savedTimes,savedVars, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
-createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,#= rejectedSteps[1] =#simulStepCount,countEvents,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars#= ,savedDers =#, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,countEvents,numSteps,ft)
 end#end integrate
