@@ -67,7 +67,14 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
    export savedNLODEContProblem,savedNLODEDiscProblem,EventDependencyStruct
  
-    
+   export func
+
+   """
+       func(x)
+   
+   Return double the number `x` plus `1`.
+   """
+   func(x) = 2x + 1
     #include section of ts subcomponent
    # include("ownTaylor/parameters.jl")  
     include("ownTaylor/constructors.jl") 
