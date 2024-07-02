@@ -13,11 +13,8 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '^1.6'
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
         arch:
           - x64
     steps:
