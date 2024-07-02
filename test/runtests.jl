@@ -1,7 +1,7 @@
-using QuantizedSystemSolver
+using formalA2
 using Test
 
-@testset "QuantizedSystemSolver.jl" begin
+@testset "formalA2.jl" begin
     # Write your tests here.
     odeprob = @NLodeProblem begin
         #sys b53
