@@ -100,7 +100,7 @@ function mainTestA2(solver::formalA2.QSSAlgorithm{solType, V})where {V,solType}
   for k=2821:2821
     fn=Symbol("A1_$k")
     fun=getfield(Main, fn)
-  #  @show fun
+    @show fun
  #=  if 500<k<502 @show k end
   if 1000<k<1002 @show k end
   if 2000<k<2002 @show k end
@@ -114,7 +114,7 @@ function mainTestA2(solver::formalA2.QSSAlgorithm{solType, V})where {V,solType}
   if 10000<k<10002 @show k end
   if 11000<k<11002 @show k end
   if 12000<k<12002 @show k end =#
-    push!(cResults,solveProblem(fun,ft,solver,absTol,relTol))
+    #push!(cResults,solveProblem(fun,ft,solver,absTol,relTol))
   end
   #@show cResults
  #=  XLSX.openxlsx("LTI_A2_ft100_$(solType)_$(V).xlsx", mode="w") do xf
