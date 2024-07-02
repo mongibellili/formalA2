@@ -72,9 +72,9 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
    """
        func(x)
    
-   Return double the number `x` plus `1`.
+   Return double the number `x` plus `2`.
    """
-   func(x) = 2x + 1
+   func(x) = 2x + 2
     #include section of ts subcomponent
    # include("ownTaylor/parameters.jl")  
     include("ownTaylor/constructors.jl") 
